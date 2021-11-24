@@ -8,10 +8,11 @@ precision mediump float;
 //input
 attribute vec3 vertPosition;
 attribute vec2 vertTexCoord;
-
+attribute vec4 vertColor;
 
 //output
 varying vec2 fragTexCoord;
+varying lowp vec4 vColor;
 
 //global constants
 uniform mat4 mWorld; //World space
@@ -21,6 +22,7 @@ uniform mat4 mProj;  //points?
 void main() {
     fragTexCoord = vertTexCoord;
     gl_Position = mProj * mView * mWorld * vec4(vertPosition, 1.0);
+    vColor = vertColor; 
 }
 `;
 
@@ -31,12 +33,14 @@ precision mediump float;
 
 //output
 varying vec2 fragTexCoord;
+varying lowp vec4 vColor;
 
 uniform sampler2D sampler;
 
 
 void main(){
     gl_FragColor = texture2D(sampler, fragTexCoord);
+    // gl_FragColor = vColor; 
 }
 `;
 
@@ -71,6 +75,7 @@ function main() {
         attribLocations: {
           vertexPosition: gl.getAttribLocation(program, 'vertPosition'),
           vertTexCoord: gl.getAttribLocation(program, 'vertTexCoord'),
+          vertColor: gl.getAttribLocation(program, 'vertColor'),
         },
         uniformLocations: {
             modelWorldMatrix: gl.getUniformLocation(program, 'mWorld'),
@@ -84,12 +89,14 @@ function main() {
     let buffers = initBuffers(gl);
 
 
+    // Tell WebGL how to pull out the position from the position buffer 
     {
         const numComponents = 3;
         const type = gl.FLOAT; //Type of elements
         const normalize = false;
         const stride = 5 * Float32Array.BYTES_PER_ELEMENT; // size of an individual vertex
         const offset = 0; // offset from the beginning of a single vertex to this attribute
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position)
         gl.vertexAttribPointer(
             programInfo.attribLocations.vertexPosition,
             numComponents,
@@ -100,12 +107,16 @@ function main() {
         gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
     }
 
+
+    // Tell WebGL how to pull out the texture from the texture buffer 
+    // into the vertTex attribute
     {
         const numComponents = 2;
         const type = gl.FLOAT; //Type of elements
         const normalize = false;
         const stride = 5 * Float32Array.BYTES_PER_ELEMENT; // size of an individual vertex
         const offset = 3 * Float32Array.BYTES_PER_ELEMENT; // offset from the beginning of a single vertex to this attribute
+        gl.bindTexture(gl.TEXTURE_2D, buffers.tex);
         gl.vertexAttribPointer(
             programInfo.attribLocations.vertTexCoord,
             numComponents,
@@ -116,13 +127,31 @@ function main() {
         gl.enableVertexAttribArray(programInfo.attribLocations.vertTexCoord);
     }
 
+    // Tell WebGL how to pull out the colors from the color buffer
+    // into the vertexColor attribute.
+    {
+        const numComponents = 4;
+        const type = gl.FLOAT;
+        const normalize = false;
+        const stride = 0;
+        const offset = 0;
+        gl.vertexAttribPointer(
+            programInfo.attribLocations.vertColor,
+            numComponents,
+            type,
+            normalize,
+            stride,
+            offset);
+        gl.enableVertexAttribArray(
+            programInfo.attribLocations.vertColor);
+      }
+
+
+
     //
     // tell OpenGL state machine which program should be active
     //
     gl.useProgram(program); 
-
-
-
     let matWorldUniformLocation = gl.getUniformLocation(program, 'mWorld');
     let matViewUniformLocation = gl.getUniformLocation(program, 'mView');
     let matProjUniformLocation = gl.getUniformLocation(program, 'mProj');
@@ -322,119 +351,95 @@ function initBuffers(gl) {
     
     // Now create an array of positions for the square.
     
-    // const positions = [
-    //     // Front face
-    //     -1.0, -1.0,  1.0,
-    //     1.0, -1.0,  1.0,
-    //     1.0,  1.0,  1.0,
-    //     -1.0,  1.0,  1.0,
+    const positions = [
+        // Front face
+        -1.0, -1.0,  1.0,
+        1.0, -1.0,  1.0,
+        1.0,  1.0,  1.0,
+        -1.0,  1.0,  1.0,
         
-    //     // Back face
-    //     -1.0, -1.0, -1.0,
-    //     -1.0,  1.0, -1.0,
-    //     1.0,  1.0, -1.0,
-    //     1.0, -1.0, -1.0,
+        // Back face
+        -1.0, -1.0, -1.0,
+        -1.0,  1.0, -1.0,
+        1.0,  1.0, -1.0,
+        1.0, -1.0, -1.0,
         
-    //     // Top face
-    //     -1.0,  1.0, -1.0,
-    //     -1.0,  1.0,  1.0,
-    //     1.0,  1.0,  1.0,
-    //     1.0,  1.0, -1.0,
+        // Top face
+        -1.0,  1.0, -1.0,
+        -1.0,  1.0,  1.0,
+        1.0,  1.0,  1.0,
+        1.0,  1.0, -1.0,
         
-    //     // Bottom face
-    //     -1.0, -1.0, -1.0,
-    //     1.0, -1.0, -1.0,
-    //     1.0, -1.0,  1.0,
-    //     -1.0, -1.0,  1.0,
+        // Bottom face
+        -1.0, -1.0, -1.0,
+        1.0, -1.0, -1.0,
+        1.0, -1.0,  1.0,
+        -1.0, -1.0,  1.0,
         
-    //     // Right face
-    //     1.0, -1.0, -1.0,
-    //     1.0,  1.0, -1.0,
-    //     1.0,  1.0,  1.0,
-    //     1.0, -1.0,  1.0,
+        // Right face
+        1.0, -1.0, -1.0,
+        1.0,  1.0, -1.0,
+        1.0,  1.0,  1.0,
+        1.0, -1.0,  1.0,
         
-    //     // Left face
-    //     -1.0, -1.0, -1.0,
-    //     -1.0, -1.0,  1.0,
-    //     -1.0,  1.0,  1.0,
-    //     -1.0,  1.0, -1.0,
-    // ];
+        // Left face
+        -1.0, -1.0, -1.0,
+        -1.0, -1.0,  1.0,
+        -1.0,  1.0,  1.0,
+        -1.0,  1.0, -1.0,
+    ];
     
     
     // // Now pass the list of positions into WebGL to build the
     // // shape. We do this by creating a Float32Array from the
     // // JavaScript array, then use it to fill the current buffer.
     
-    // const positionBuffer = gl.createBuffer();
-    // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    // gl.bufferData(gl.ARRAY_BUFFER,
-    //                 new Float32Array(positions),
-    //                 gl.STATIC_DRAW);
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER,
+                    new Float32Array(positions),
+                    gl.STATIC_DRAW);
 
 
     // // This array defines each face as two triangles, using the
     // // indices into the vertex array to specify each triangle's
     // // position.
     
-    // const indices = [
-    //     0,  1,  2,      0,  2,  3,    // front
-    //     4,  5,  6,      4,  6,  7,    // back
-    //     8,  9,  10,     8,  10, 11,   // top
-    //     12, 13, 14,     12, 14, 15,   // bottom
-    //     16, 17, 18,     16, 18, 19,   // right
-    //     20, 21, 22,     20, 22, 23,   // left
-    // ];
+    const indices = [
+        0,  1,  2,      0,  2,  3,    // front
+        4,  5,  6,      4,  6,  7,    // back
+        8,  9,  10,     8,  10, 11,   // top
+        12, 13, 14,     12, 14, 15,   // bottom
+        16, 17, 18,     16, 18, 19,   // right
+        20, 21, 22,     20, 22, 23,   // left
+    ];
     
-    // const indexBuffer = gl.createBuffer();
-    // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
-    //     new Uint16Array(indices), gl.STATIC_DRAW);
-  
-
-
-	let texIndices = 
-	[ // U, V
-        // Top
-        0, 0,
-        0, 1,
-        1, 1,
-        1, 0,
-
-        // Left
-        0, 0,
-        1, 0,
-        1, 1,
-        0, 1,
-
-        // Right
-        1, 1,
-        0, 1,
-        0, 0,
-        1, 0,
-
-        // Front
-        1, 1,
-        1, 0,
-        0, 0,
-        0, 1,
-
-        // Back
-        0, 0,
-        0, 1,
-        1, 1,
-        1, 0,
-
-        // Bottom
-        1, 1,
-        1, 0,
-        0, 0,
-        0, 1,
-	];
-
-    const texIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, texIndexBuffer);
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
-        new Uint16Array(texIndices), gl.STATIC_DRAW);
+        new Uint16Array(indices), gl.STATIC_DRAW);
+
+
+    const faceColors = [
+        [1.0,  1.0,  1.0,  1.0],    // Front face: white
+        [1.0,  0.0,  0.0,  1.0],    // Back face: red
+        [0.0,  1.0,  0.0,  1.0],    // Top face: green
+        [0.0,  0.0,  1.0,  1.0],    // Bottom face: blue
+        [1.0,  1.0,  0.0,  1.0],    // Right face: yellow
+        [1.0,  0.0,  1.0,  1.0],    // Left face: purple
+        ];
+
+    var colors = [];
+
+    for (var j = 0; j < faceColors.length; ++j){
+        const c = faceColors[j];
+        colors = colors.concat(c, c, c, c);
+    }
+
+    const colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+  
 
 
     let boxVertices = 
@@ -530,6 +535,7 @@ function initBuffers(gl) {
     return {
         position: boxVertexBufferObject,
         indices: boxIndexBufferObject,
+        color: colorBuffer,
         tex: boxTexture,
     };
 }
