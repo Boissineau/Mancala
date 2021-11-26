@@ -1,18 +1,11 @@
-import { OBJLoader } from "../libraries/three.js/examples/jsm/loaders/OBJLoader.js"
+import { OBJLoader } from "../libraries/three.js/examples/jsm/loaders/OBJLoader.js";
 
-
-let objURL = [
-    './assets/board/new/mancala.obj',
-    
-
-]
-
+let objURL = ["./assets/board/new/mancala.obj"];
 
 const vec3 = twgl.v3;
 const mat4 = twgl.m4;
 mat4.create = () =>
     new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-
 
 mat4.fromRotationTranslationScale = (q, v, s) => {
     // Quaternion math
@@ -153,7 +146,6 @@ function createSCs(obj) {
     return scs;
 }
 
-
 function createSC(attributes, offset) {
     let positions = offset
         ? attributes.position.array.slice(
@@ -201,7 +193,6 @@ function createSC(attributes, offset) {
     };
 }
 
-
 function computeModelExtent(o) {
     const extents = o.map((d) => {
         const xExtent = d3.extent(d.sc.positions.filter((_, i) => i % 3 === 0));
@@ -239,40 +230,31 @@ function computeModelExtent(o) {
     };
 }
 
-
 class Models {
-
     constructor() {
-        this.objs = [] 
+        this.objs = [];
         this.modelSCs = [];
+        this.modelExtents = [];
         this.vertexAttributes = [];
     }
-    
-    async getModelData(){
 
-        for await (const obj of objURL.map(url => loadObject(url))) {
+    async getModelData() {
+        for await (const obj of objURL.map((url) => loadObject(url))) {
+            let tmpSC = createSCs(obj);
+            let tmpME = computeModelExtent(tmpSC);
+            let tmpVA = tmpSC.map(d => ({
+                position: { numComponents: 3, data: d.sc.positions },
+                normal: { numComponents: 3, data: d.sc.normals },
+                uv: { numComponents: 2, data: d.sc.uvs }
+            }));
 
-            let tmp = {
-                name: "",
-                modelMatrix: mat4.identity(),
-                sc:{
-                    positions: "",
-                    normals: "",
-                    uvs: ""
-                }
-            } 
 
-            this.objs.push(tmp);
-        } 
-        
+            this.objs.push(obj);
+            this.modelSCs.push(tmpSC);
+            this.modelExtents.push(tmpME);
+            this.vertexAttributes.push(tmpVA);
+        }
     }
-
-
-
-
 }
 
-
-
-
-export {Models}
+export { Models };
