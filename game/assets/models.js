@@ -1,6 +1,9 @@
 import { OBJLoader } from "../libraries/three.js/examples/jsm/loaders/OBJLoader.js";
 
-let objURL = ["./assets/board/new/mancala.obj"];
+let objURL = [
+    "./assets/board/new/mancala.obj",
+    "./assets/raymanModel.obj", 
+];
 
 const vec3 = twgl.v3;
 const mat4 = twgl.m4;
@@ -249,10 +252,19 @@ class Models {
             }));
 
 
-            this.objs.push(obj);
-            this.modelSCs.push(tmpSC);
-            this.modelExtents.push(tmpME);
-            this.vertexAttributes.push(tmpVA);
+            
+            let info = {
+                obj: obj,
+                modelSCs: tmpSC,
+                modelExtents: tmpME,
+                vertexAttributes: tmpVA
+            }
+            
+            this.objs.push(info);
+            // this.modelSCs.push(tmpSC);
+            // this.modelExtents.push(tmpME);
+            // this.vertexAttributes.push(tmpVA);
+
         }
     }
 }
