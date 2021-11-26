@@ -243,17 +243,26 @@ function computeModelExtent(o) {
 class Models {
 
     constructor() {
+        this.objs = [] 
         this.modelSCs = [];
         this.vertexAttributes = [];
-
-        this.objs = [] 
-
     }
     
     async getModelData(){
 
         for await (const obj of objURL.map(url => loadObject(url))) {
-            this.objs.push(obj);
+
+            let tmp = {
+                name: "",
+                modelMatrix: mat4.identity(),
+                sc:{
+                    positions: "",
+                    normals: "",
+                    uvs: ""
+                }
+            } 
+
+            this.objs.push(tmp);
         } 
         
     }
