@@ -44,11 +44,39 @@ void main(){
 }
 `;
 
+let skybox_vs = `
+attribute vec4 a_position;
+varying vec4 v_position;
+void main() {
+  v_position = a_position;
+  gl_Position = a_position;
+  gl_Position.z = 1.0;
+}
+`;
+
+let skybox_fs = `
+precision mediump float;
+ 
+uniform samplerCube u_skybox;
+uniform mat4 u_viewDirectionProjectionInverse;
+ 
+varying vec4 v_position;
+void main() {
+  vec4 t = u_viewDirectionProjectionInverse * v_position;
+  gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
+}
+
+`;
+
+
 
 function main() {
 
+    // let loader = new MTLLoader();
+
+
     let canvas = document.getElementById("glCanvas");
-    let gl = canvas.getContext('webgl');
+    let gl = canvas.getContext('webgl2');
     if (!gl) {
         gl = canvas.getContext('experimental-webgl');
     }
@@ -65,6 +93,8 @@ function main() {
 
 
     let program = initShaderProgram(gl, vs, fs);
+    let skyboxProgram = initShaderProgram(gl, skybox_vs, skybox_fs);
+    
     // 
     //  Create buffer
     // 
@@ -85,6 +115,18 @@ function main() {
     };
 
     
+    const skyboxProgramInfo = {
+        program: skyboxProgram,
+        attribLocations: {
+            positionLocation: gl.getAttribLocation(skyboxProgram, "a_position"),
+
+        },
+        uniformLocations: {
+            skyboxLocation : gl.getUniformLocation(skyboxProgram, "u_skybox"),
+            viewDirectionProjectionInverseLocation: gl.getUniformLocation(skyboxProgram, "u_viewDirectionProjectionInverse"),
+        },
+    };
+
     
     let buffers = initBuffers(gl);
 
@@ -144,8 +186,27 @@ function main() {
             offset);
         gl.enableVertexAttribArray(
             programInfo.attribLocations.vertColor);
-      }
+    }
 
+
+    // skyboxBuffer = createSkybox(gl, skyboxProgram);
+    // {
+    //     const numComponents = 2;
+    //     const type = gl.FLOAT;
+    //     const normalize = false;
+    //     const stride = 0;
+    //     const offset = 0;
+    //     gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
+    //     gl.vertexAttribPointer(
+    //         skyboxProgramInfo.attribLocations.positionLocation,
+    //         numComponents,
+    //         type,
+    //         normalize,
+    //         stride,
+    //         offset);
+    //     gl.enableVertexAttribArray(
+    //         programInfo.attribLocations.vertColor);
+    // }
 
 
     //
@@ -232,6 +293,7 @@ function main() {
     let render = function(){
 
         // recreate the matrices for zoom 
+        gl.useProgram(program);
         mat4.lookAt(viewMatrix, [0, 0, zoom], [0, 0, 0], [0, 1, 0]);
         gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
         gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
@@ -287,7 +349,7 @@ function getAngle(x1, y1, x2, y2){
 
     if (distX == 0) distX = 0.01;
     if (distY == 0) distY = 0.01;
-    angles = {
+    let angles = {
         x: distX/100,
         y: distY/10
     }
@@ -518,6 +580,8 @@ function initBuffers(gl) {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(boxIndices), gl.STATIC_DRAW);
 
 
+
+
     let boxTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, boxTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -532,15 +596,98 @@ function initBuffers(gl) {
         );
     gl.bindTexture(gl.TEXTURE_2D, null);
 
+
+
+
+
     return {
         position: boxVertexBufferObject,
         indices: boxIndexBufferObject,
         color: colorBuffer,
         tex: boxTexture,
+        // skybox: skyboxBuffer,
     };
 }
 
 
 
 
+function createSkybox(gl, program){
 
+
+    gl.useProgram(program);
+    let skyboxPositions =
+	[
+       -1.0, -1.0, 
+        1.0, -1.0, 
+       -1.0,  1.0, 
+       -1.0,  1.0,
+        1.0, -1.0,
+        1.0,  1.0,
+	];
+
+    let skyboxBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(skyboxPositions), gl.STATIC_DRAW);
+
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+
+    const faceInfos = [
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+      url: 'images/pos-x.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+      url: 'images/neg-x.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+      url: 'images/pos-y.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      url: 'images/neg-y.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+      url: 'images/pos-z.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+      url: 'images/neg-z.jpg',
+    },
+  ];
+    faceInfos.forEach((faceInfo) => {
+        const {target, url} = faceInfo;
+
+        // Upload the canvas to the cubemap face.
+        const level = 0;
+        const internalFormat = gl.RGBA;
+        const width = 512;
+        const height = 512;
+        const format = gl.RGBA;
+        const type = gl.UNSIGNED_BYTE;
+
+        // setup each face so it's immediately renderable
+        gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
+
+        // Asynchronously load an image
+        const image = new Image();
+        image.src = url;
+        image.addEventListener('load', function() {
+        // Now that the image has loaded make copy it to the texture.
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+        gl.texImage2D(target, level, internalFormat, format, type, image);
+        gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+        });
+    });
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+    return skyboxBuffer; 
+
+}
+
+window.onload = main
