@@ -43,8 +43,11 @@ function main(){
         console.log('browser does not support webgl');
     }
 
+
     let models = new Models();
     models.getModelData();
+    console.log(models.objs);
+
 
     
     gl.clearColor(0.75,  0.85, 0.8, 1.0);
