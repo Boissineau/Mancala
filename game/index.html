@@ -5,7 +5,22 @@ integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRS
 crossorigin="anonymous" defer>
 </script>
 
-<script src="dist/4.x/twgl-full.min.js"></script>
+
+<script type="module" src="libraries/three.js/examples/jsm/loaders/MTLLoader.js"></script>
+<script type="module" src="libraries/three.js/examples/jsm/loaders/OBJLoader.js"></script>
+
+<script src="libraries/dist/4.x/twgl-full.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/three@0.117.1/build/three.module.js"></script> -->
+<!-- <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.117.1/build/three.module.js"
+</script>
+
+<script type="module">
+    import { MTLLoader } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/MTLLoader.js';
+    const mtlLoader = new MTLLoader();
+</script> -->
+
+
 
 <head>
     <meta charset="UTF-8">
@@ -13,9 +28,9 @@ crossorigin="anonymous" defer>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
-<body onload="main();">
+<body>
     <canvas id="glCanvas" width="640" height="480"></canvas>
-    <script src="app4.js"></script>
+    <script type='module' src="app5.js"></script>
     <img id="crate-image" src="crate.png" width="0" height="0"></img>
     <!-- <script src="game.js"></script> -->
 </body>
