@@ -29,10 +29,11 @@ const fs = `#version 300 es
     outColor = vec4(abs(N), 1);
     }`;
     
-import { Models } from "./models/models.js"
+import { Models } from "./assets/models.js";
 
 function main(){
 
+    
     let canvas = document.getElementById("glCanvas");
     let gl = canvas.getContext('webgl2');
     if (!gl) {
@@ -42,6 +43,10 @@ function main(){
         console.log('browser does not support webgl');
     }
 
+    let models = new Models();
+    models.getModelData();
+
+    
     gl.clearColor(0.75,  0.85, 0.8, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -58,7 +63,6 @@ function main(){
         // deg2rad(y_angle)
     // )
 
-    let modelLoader = new Models();
 
 
 
