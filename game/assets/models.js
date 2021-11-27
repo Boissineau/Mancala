@@ -251,7 +251,6 @@ class Models {
         this.modelSCs.push(tmpSC);
         this.modelExtents.push(tmpME);
         this.vertexAttributes.push(tmpVA);
-        return tmpME
     }
 
     getExtents(){
