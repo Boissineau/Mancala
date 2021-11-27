@@ -7,6 +7,10 @@ let time = 0;
 //     "./assets/raymanModel.obj",
 // ];
 
+// https://stackoverflow.com/questions/3798848/most-efficient-way-to-draw-multiple-identical-objects
+// https://stackoverflow.com/questions/3846359/efficient-way-of-drawing-in-opengl-es
+// https://webglfundamentals.org/webgl/lessons/webgl-drawing-multiple-things.html
+
 let objURL = [
     // "./assets/board/new/mancala2.obj",
     "./assets/pebble_OBJ/pebble2.obj"
