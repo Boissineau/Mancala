@@ -8,7 +8,8 @@ let time = 0
 //     "./assets/raymanModel.obj", 
 // ];
 
-let objURL = ["./assets/board/new/mancala.obj"]
+// let objURL = ["./assets/raymanModel.obj",]
+let objURL = ["./assets/board/new/mancala2.obj",]
 
 import { Models } from "./assets/models.js";
 
@@ -27,9 +28,9 @@ let boxProgram = boxProgramInfo(gl);
 let models = new Models();
 
 let near = 0.1
-let far = 2.5
+let far = 2
 let radius = 1
-let canvasWidth = gl.canvas.width / 2
+let canvasWidth = gl.canvas.width
 let canvasHeight = gl.canvas.height
 let aspect = canvasWidth / canvasHeight
 let modelDim = undefined
@@ -37,13 +38,60 @@ let cameraLookAt = undefined
 let modelObj = undefined 
 let y_angle = 0
 // let x_angle = document.getElementById("myRange").value
-let fov_Y = 75
+let fov_Y = 90
 
-let slider = document.getElementById("myRange") 
 let x_angle = undefined
 
+let drag = false;
+let click = false; 
+let mouseDownX = 1;
+let mouseDownY = 1; 
+
+
+// canvas.add... for clicking on canvas only
+document.addEventListener('mousedown', (event) => {
+    click = true; 
+    mouseDownX = event.clientX;
+    mouseDownY = event.clientY;
+});
+
+let mouseUpX = 1;
+let mouseUpY = 1; 
+document.addEventListener('mousemove', (event) => {
+    if (!click) return;
+    drag = true
+    mouseUpX = event.clientX;
+    mouseUpY = event.clientY;
+}
+);
+
+document.addEventListener('mouseup', () => 
+{
+    click = false; 
+    if (drag){
+        drag = false; 
+    }
+});
+
+// zoom in and out 
+let zoom = -8;
+document.addEventListener('wheel', (event) => {
+    let scale = event.deltaY * -0.01;
+    if (zoom + scale >= -3) scale = 0;
+    if (zoom + scale <= -20) scale = 0;
+    zoom += scale;
+});
+
+
+
+let modelMatrix = m4.identity();
+let xRot = m4.identity();
+let yRot = m4.identity();
+let identityMatrix = m4.identity();
+let angle = {x: 0, y: 0}; 
 async function main(){
 
+    
     await models.getModelData(objURL);
     modelDim = models.modelExtents[0]
     cameraLookAt = modelDim.center
@@ -51,32 +99,42 @@ async function main(){
 
 
     let render = () => {
-        x_angle = slider.value 
+
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.3, 0.4, 0.5, 1);
-        gl.enable(gl.SCISSOR_TEST);
-        gl.lineWidth(2);
-        gl.viewport(0, 0, canvasWidth, gl.canvas.height);
-        gl.scissor(0, 0, canvasWidth, gl.canvas.height);
-        // gl.clearColor(...hex2rgb(colors.leftBackgroundColor), 1);
+        gl.enable(gl.CULL_FACE);
+        gl.frontFace(gl.CCW);
+        gl.cullFace(gl.BACK);
+        gl.viewport(0, 0, canvasWidth, canvasHeight);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      
         
-    
-        renderCamera();
-      
-        gl.viewport(canvasWidth, 0, canvasWidth, gl.canvas.height);
-        gl.scissor(canvasWidth, 0, canvasWidth, gl.canvas.height);
-        // gl.clearColor(...hex2rgb(colors.rightBackgroundColor), 1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
+        
+        if (drag) {
+            angle = getAngle(mouseDownX, mouseDownY, mouseUpX, mouseUpY);
+            mat4.rotate(xRot, identityMatrix, angle.x / 4, [0, 1, 0]);
+            // finds y rotation
+            mat4.rotate(yRot, identityMatrix, angle.y / 16, [1, 0, 0]);
+            //multiplies them together to create the new look
+            mat4.mul(modelMatrix, xRot, yRot);
+        } else {
+
+            let angleSeconds = performance.now() / 1000 / 6 * 2 * Math.PI;
+            angle.x = angleSeconds
+            angle.y = angleSeconds / 4
+            mat4.rotate(xRot, identityMatrix, angle.x, [0, 1, 0]);
+            // finds y rotation
+            mat4.rotate(yRot, identityMatrix, angle.y, [1, 0, 0]);
+            //multiplies them together to create the new look
+            mat4.mul(modelMatrix, xRot, yRot);
+        }
+        
         
         renderScene(
           sceneProgram,
           getViewMatrix(
             radius,
-            deg2rad(x_angle),
-            deg2rad(y_angle)
+            deg2rad(angle.x),
+            deg2rad(angle.y)
           ),
           getProjectionMatrix(fov_Y, near, far)
         );
@@ -135,7 +193,7 @@ function renderScene(programInfo, viewMatrix, projectionMatrix){
     gl.useProgram(programInfo.program);
     const uniforms = {
       n2c: 0,
-      modelMatrix: m4.identity(),
+      modelMatrix: modelMatrix,
       viewMatrix,
       projectionMatrix
     };
@@ -264,9 +322,28 @@ function bufferInfoArray() {
     return modelObj.map((vertexAttributes) =>
       twgl.createBufferInfoFromArrays(gl, vertexAttributes)
     );
-
 }  
 
+
+function getAngle(x1, y1, x2, y2){
+    y1 = -y1; 
+    y2 = -y2;
+
+    var distY = y2-y1; //opposite
+    var distX = x2-x1; //adjacent
+
+
+
+    if (distX == 0) distX = 0.01;
+    if (distY == 0) distY = 0.01;
+    let angles = {
+        x: distX/100,
+        y: distY/10
+    }
+    return angles //return angle in degrees
+    
+
+}
 
 
 function sceneProgramInfo(gl){
