@@ -1,10 +1,5 @@
 import { OBJLoader } from "../libraries/three.js/examples/jsm/loaders/OBJLoader.js";
 
-let objURL = [
-    "./assets/board/new/mancala.obj",
-    "./assets/raymanModel.obj", 
-];
-
 const vec3 = twgl.v3;
 const mat4 = twgl.m4;
 mat4.create = () =>
@@ -241,31 +236,26 @@ class Models {
         this.vertexAttributes = [];
     }
 
-    async getModelData() {
-        for await (const obj of objURL.map((url) => loadObject(url))) {
-            let tmpSC = createSCs(obj);
-            let tmpME = computeModelExtent(tmpSC);
-            let tmpVA = tmpSC.map(d => ({
-                position: { numComponents: 3, data: d.sc.positions },
-                normal: { numComponents: 3, data: d.sc.normals },
-                uv: { numComponents: 2, data: d.sc.uvs }
-            }));
+    async getModelData(url) {
+        let obj = await loadObject(url)
+        let tmpSC = createSCs(obj);
+        let tmpME = computeModelExtent(tmpSC);
+        let tmpVA = tmpSC.map(d => ({
+            position: { numComponents: 3, data: d.sc.positions },
+            normal: { numComponents: 3, data: d.sc.normals },
+            uv: { numComponents: 2, data: d.sc.uvs }
+        }));
 
 
-            
-            let info = {
-                obj: obj,
-                modelSCs: tmpSC,
-                modelExtents: tmpME,
-                vertexAttributes: tmpVA
-            }
-            
-            this.objs.push(info);
-            // this.modelSCs.push(tmpSC);
-            // this.modelExtents.push(tmpME);
-            // this.vertexAttributes.push(tmpVA);
+        this.objs.push(obj);
+        this.modelSCs.push(tmpSC);
+        this.modelExtents.push(tmpME);
+        this.vertexAttributes.push(tmpVA);
+        return tmpME
+    }
 
-        }
+    getExtents(){
+        return this.modelExtents
     }
 }
 
