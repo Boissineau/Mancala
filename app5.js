@@ -7,7 +7,14 @@ let time = 0;
 //     "./assets/raymanModel.obj",
 // ];
 
-let objURL = ["./assets/board/new/mancala.obj"];
+// https://stackoverflow.com/questions/3798848/most-efficient-way-to-draw-multiple-identical-objects
+// https://stackoverflow.com/questions/3846359/efficient-way-of-drawing-in-opengl-es
+// https://webglfundamentals.org/webgl/lessons/webgl-drawing-multiple-things.html
+
+let objURL = [
+    // "./assets/board/new/mancala2.obj",
+    "./assets/pebble_OBJ/pebble2.obj"
+];
 
 import { Models } from "./assets/models.js";
 
@@ -49,21 +56,16 @@ async function main() {
 
     let render = () => {
         x_angle = slider.value;
+
+
+
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.3, 0.4, 0.5, 1);
-        // gl.enable(gl.SCISSOR_TEST);
-        // gl.lineWidth(2);
-        gl.viewport(0, 0, canvasWidth, gl.canvas.height);
-        // gl.scissor(0, 0, canvasWidth, gl.canvas.height);
-        // gl.clearColor(...hex2rgb(colors.leftBackgroundColor), 1);
+        gl.enable(gl.CULL_FACE);
+        gl.frontFace(gl.CCW);
+        gl.cullFace(gl.BACK);
+        gl.viewport(0, 0, canvasWidth, canvasHeight);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        // renderCamera();
-
-        // gl.viewport(0, 0, canvasWidth, gl.canvas.height);
-        // gl.scissor(0, 0, canvasWidth, gl.canvas.height);
-        // gl.clearColor(...hex2rgb(colors.rightBackgroundColor), 1);
-        // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         renderScene(
             sceneProgram,
