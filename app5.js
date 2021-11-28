@@ -12,8 +12,9 @@ let time = 0;
 // https://webglfundamentals.org/webgl/lessons/webgl-drawing-multiple-things.html
 
 let objURL = [
-    // "./assets/board/new/mancala2.obj",
     "./assets/pebble_OBJ/pebble2.obj"
+        // "./assets/board/new/mancala2.obj",
+
 ];
 
 import { Models } from "./assets/models.js";
@@ -56,9 +57,7 @@ async function main() {
 
     let render = () => {
         x_angle = slider.value;
-
-
-
+        
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.3, 0.4, 0.5, 1);
         gl.enable(gl.CULL_FACE);
@@ -70,7 +69,8 @@ async function main() {
         renderScene(
             sceneProgram,
             getViewMatrix(radius, deg2rad(x_angle), deg2rad(y_angle)),
-            getProjectionMatrix(fov_Y, near, far)
+            getProjectionMatrix(fov_Y, near, far),
+            modelObj
         );
         requestAnimationFrame(render);
     };
@@ -123,7 +123,7 @@ function getProjectionMatrix(fov, near, far) {
 //     );
 // }
 
-function renderScene(programInfo, viewMatrix, projectionMatrix) {
+function renderScene(programInfo, viewMatrix, projectionMatrix, model) {
     gl.useProgram(programInfo.program);
     const uniforms = {
         n2c: 0,
@@ -132,7 +132,7 @@ function renderScene(programInfo, viewMatrix, projectionMatrix) {
         projectionMatrix,
     };
     twgl.setUniforms(programInfo, uniforms);
-    let bufferInfoArr = bufferInfoArray();
+    let bufferInfoArr = bufferInfoArray(model);
     bufferInfoArr.forEach((bufferInfo) => {
         twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
         twgl.drawBufferInfo(gl, bufferInfo, gl["TRIANGLES"]);
@@ -252,8 +252,8 @@ function renderScene(programInfo, viewMatrix, projectionMatrix) {
 //     return twgl.createBufferInfoFromArrays(gl, boxAttributes);
 // }
 
-function bufferInfoArray() {
-    return modelObj.map((vertexAttributes) =>
+function bufferInfoArray(model) {
+    return model.map((vertexAttributes) =>
         twgl.createBufferInfoFromArrays(gl, vertexAttributes)
     );
 }
