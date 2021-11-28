@@ -83,7 +83,7 @@ let mouseDownX = 1;
 let mouseDownY = 1; 
 let mouseUpX = 1;
 let mouseUpY = 1; 
-
+let clicked = false; 
 
 // canvas.add... for clicking on canvas only
 document.addEventListener('mousedown', (event) => {
@@ -91,6 +91,7 @@ document.addEventListener('mousedown', (event) => {
     mouseDownX = event.clientX;
     mouseDownY = event.clientY;
 });
+
 
 document.addEventListener('mousemove', (event) => {
     if (!click) return;
@@ -113,7 +114,7 @@ let zoom = -8;
 document.addEventListener('wheel', (event) => {
     let scale = event.deltaY * -0.01;
     if (zoom + scale >= -3) scale = 0;
-    if (zoom + scale <= -20) scale = 0;
+    if (zoom + scale <= -10) scale = 0;
     zoom += scale;
 });
 
@@ -150,6 +151,7 @@ async function main(){
     
     // gl.clearColor(0.3, 0.4, 0.5, 1);
     
+
     let render = () => {
         gl.clearColor(0.0, 0.0, 0.0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -245,15 +247,17 @@ function renderScene(programInfo, viewMatrix, projectionMatrix){
         specularColor,
         K_s,
         shininess,
-      ambient,
-      light,
-      eyePosition,
-      tex: texture,
+        ambient,
+        light,
+        eyePosition,
+        tex: texture, 
+        clicked: clicked
     };
 
     gl.useProgram(programInfo.program);
     twgl.setUniforms(programInfo, uniforms);
     let bufferInfoArr = bufferInfoArray()
+
     bufferInfoArr.forEach((bufferInfo) => {
       twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
       twgl.drawBufferInfo(gl, bufferInfo, gl["TRIANGLES"]);
@@ -275,6 +279,7 @@ function renderSkybox() {
     twgl.drawBufferInfo(gl, skyboxBuffer);
     gl.depthFunc(gl.LESS);
   }
+
 
 function bufferInfoArray() {
       
@@ -334,7 +339,7 @@ function sceneProgramInfo(gl){
       uniform mat4 modelMatrix;
       uniform mat4 viewMatrix;
       uniform mat4 projectionMatrix;
-
+ 
       out vec3 fragNormal;
       out vec3 fragPosition; 
       out vec2 fragUV; 
@@ -347,7 +352,6 @@ function sceneProgramInfo(gl){
         fragNormal = normalize((normalMatrix*vec4(normal,0)).xyz);
         gl_PointSize = 2.;
         fragUV = uv;
-
       }`,
   
       fs: `#version 300 es
@@ -370,6 +374,7 @@ function sceneProgramInfo(gl){
       uniform float K_s, shininess, ambient;
       uniform vec3 specularColor;
       uniform sampler2D tex;
+      uniform bool clicked; 
 
       void main () {
         
@@ -384,14 +389,17 @@ function sceneProgramInfo(gl){
         vec3 V = normalize(eyePosition - fragPosition);
         vec3 H = normalize(L + V);
         
-        // for colour 
-        // vec3 specular = specularColor*pow( clamp(dot(H,N),0.,1.),shininess); //Compute specular color
-        // vec3 color = ambient*materialColor + (1.-K_s)*diffuse + K_s*specular;
-        // outColor = vec4(color, 1);
+        if (clicked) {
 
-        vec3 R = reflect(-V, N);
-        vec3 texColor = texture( tex, fragUV ).rgb;
-        outColor = vec4(texColor, 1);
+            // for colour 
+            vec3 specular = specularColor*pow( clamp(dot(H,N),0.,1.),shininess); //Compute specular color
+            vec3 color = ambient*materialColor + (1.-K_s)*diffuse + K_s*specular;
+            outColor = vec4(color, 1);
+        } else {
+            vec3 R = reflect(-V, N);
+            vec3 texColor = texture( tex, fragUV ).rgb;
+            outColor = vec4(texColor, 1);
+        }
 
       }`
     };
@@ -400,53 +408,53 @@ function sceneProgramInfo(gl){
     });
   }
 
-  function skyboxProgramInfo() {
-    const vert = `#version 300 es
+function skyboxProgramInfo() {
+const vert = `#version 300 es
     precision mediump float;
     in vec2 position;
     out vec2 fragPosition;
     void main() {
-      fragPosition = position;
-      gl_Position = vec4(position, 1, 1);
-    }`,
-      frag = `#version 300 es
-      precision mediump float;
-      uniform samplerCube cubemap;
-      in vec2 fragPosition;
-      out vec4 outColor;
-      uniform mat4 invViewProjectionMatrix;
-  
-      void main () {
-        vec4 direction = invViewProjectionMatrix * vec4(fragPosition, 1, 1);
-        outColor = texture(cubemap, normalize(direction.xyz/direction.w));
-      }`;
-    return twgl.createProgramInfo(gl, [vert, frag], (message) => {
-      console.log("Skybox Shader compilation error\n" + message);
-    });
-  }
+    fragPosition = position;
+    gl_Position = vec4(position, 1, 1);
+}`,
+    frag = `#version 300 es
+    precision mediump float;
+    uniform samplerCube cubemap;
+    in vec2 fragPosition;
+    out vec4 outColor;
+    uniform mat4 invViewProjectionMatrix;
 
+    void main () {
+    vec4 direction = invViewProjectionMatrix * vec4(fragPosition, 1, 1);
+    outColor = texture(cubemap, normalize(direction.xyz/direction.w));
+    }`;
+return twgl.createProgramInfo(gl, [vert, frag], (message) => {
+    console.log("Skybox Shader compilation error\n" + message);
+});
+}
 
-
-
-function boxProgramInfo(gl) {
-    const vs = `#version 300 es
-      precision highp float;
-      in vec3 position;
-    
-      uniform mat4 modelMatrix;
-      uniform mat4 viewMatrix;
-      uniform mat4 projectionMatrix;
-      void main () {
-        gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4(position,1);
-      }`,
-      fs = `#version 300 es
-      precision highp float;
-      out vec4 outColor;
-      uniform vec3 color;
-      void main () {
-        outColor = vec4(color,1);
-      }`;
-    return twgl.createProgramInfo(gl, [vs, fs]);
-  }
+function pickingProgramInfo(){
+    const vert = `#version 300 es
+    attribute vec4 a_position;
+ 
+    uniform mat4 u_matrix;
+   
+    void main() {
+      // Multiply the position by the matrix.
+      gl_Position = u_matrix * a_position;
+    }
+}`,
+    frag = `#version 300 es
+    precision mediump float;
+ 
+    uniform vec4 u_id;
+   
+    void main() {
+       gl_FragColor = u_id;
+    }`;
+return twgl.createProgramInfo(gl, [vert, frag], (message) => {
+    console.log("Skybox Shader compilation error\n" + message);
+});
+}
 
 window.onload = main
