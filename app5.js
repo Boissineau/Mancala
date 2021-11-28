@@ -53,7 +53,7 @@ async function main() {
     await models.getModelData(objURL);
     modelDim = models.modelExtents[0];
     cameraLookAt = modelDim.center;
-    modelObj = models.vertexAttributes[0];
+    modelObj = models.vertexAttributes[1];
 
     let render = () => {
         x_angle = slider.value;
