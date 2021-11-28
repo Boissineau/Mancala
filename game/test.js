@@ -3,13 +3,20 @@ const m4 = twgl.m4
 const v3 = twgl.v3
 let time = 0
 
-// let objURL = [
+// let boardURL = [
 //     "./assets/board/new/mancala.obj",
 //     "./assets/raymanModel.obj", 
 // ];
 
-// let objURL = ["./assets/raymanModel.obj",]
-let objURL = ["./assets/board/new/mancala2.obj",]
+// let boardURL = ["./assets/raymanModel.obj",]
+
+let boardURL = [
+  "./assets/board/new/mancala2.obj",
+];
+
+let beanURL = [
+  "./assets/pebble_OBJ/pebble2.obj"
+];
 
 import { Models } from "./assets/models.js";
 
@@ -58,9 +65,11 @@ let cubemap = twgl.createTexture(gl, {
 
 let sceneProgram = sceneProgramInfo(gl);
 let skyboxProgram = skyboxProgramInfo(gl);
+let beanProgram = beanProgramInfo(gl);
 
 
-let models = new Models();
+let board = new Models();
+let bean = new Models();
 
 
 let near = 0.1
@@ -72,6 +81,7 @@ let aspect = canvasWidth / canvasHeight
 let modelDim = undefined
 let cameraLookAt = undefined
 let modelObj = undefined 
+let beanObj = undefined 
 let y_angle = 0
 let fov_Y = 90
 
@@ -136,10 +146,14 @@ let angle = {x: 0, y: 0};
 async function main(){
 
     
-    await models.getModelData(objURL);
-    modelDim = models.modelExtents[0]
+    await board.getModelData(boardURL);
+    await bean.getModelData(beanURL);
+
+    modelDim = board.modelExtents[0]
     cameraLookAt = modelDim.center
-    modelObj = models.vertexAttributes[0]
+    modelObj = board.vertexAttributes[0]
+    beanObj = bean.vertexAttributes[0];
+
 
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
@@ -189,6 +203,12 @@ async function main(){
           sceneProgram,
           viewMatrix,
           projectionMatrix,
+          modelObj
+        );
+
+        renderBeans(
+          beanProgram,
+          beanObj
         );
 
         renderSkybox();
@@ -227,7 +247,7 @@ function getProjectionMatrix (fov, near, far) {
 }
 
 
-function renderScene(programInfo, viewMatrix, projectionMatrix){
+function renderScene(programInfo, viewMatrix, projectionMatrix, model){
     
     let materialColor = [0, 0.6823529411764706, 1];
     let specularColor = [0.6901960784313725, 0.09019607843137255, 0.09019607843137255]; 
@@ -256,7 +276,7 @@ function renderScene(programInfo, viewMatrix, projectionMatrix){
 
     gl.useProgram(programInfo.program);
     twgl.setUniforms(programInfo, uniforms);
-    let bufferInfoArr = bufferInfoArray()
+    let bufferInfoArr = bufferInfoArray(model)
 
     bufferInfoArr.forEach((bufferInfo) => {
       twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
@@ -280,10 +300,45 @@ function renderSkybox() {
     gl.depthFunc(gl.LESS);
   }
 
+  function renderBeans(programInfo, model) {
 
-function bufferInfoArray() {
+    // Scaling beans
+    // let beanSX = 0.00125, beanSY = 0.00125, beanSZ = 0.00125;
+    let beanSX = 0.1, beanSY = 0.1, beanSZ = 0.1;
+
+    let beanMatrix =  new Float32Array([
+        beanSX, 0.0, 0.0, 0.0,
+        0.0, beanSY, 0.0, 0.0,
+        0.0, 0.0, beanSZ, 0.0,
+        0.0, 0.0, 0.0, 1.0,
+    ]);
+    let scaleMatrix = gl.getUniformLocation(programInfo.program, 'scaleMatrix');
+
+    // Translating beans
+    let beanTX = 0.0, beanTY = 0.0, beanTZ = 0.0
+    let translation = gl.getUniformLocation(programInfo.program, 'translation' );
+    
+    gl.useProgram(programInfo.program);
+    const uniforms = {
+        n2c: 0,
+        modelMatrix: viewMatrix,
+
+    };
+    twgl.setUniforms(programInfo, uniforms);
+    let bufferInfoArr = bufferInfoArray(model);
+    bufferInfoArr.forEach((bufferInfo) => {
+        twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+        twgl.drawBufferInfo(gl, bufferInfo, gl["TRIANGLES"]);
+    });
+
+    gl.uniformMatrix4fv(scaleMatrix,false,beanMatrix);
+    gl.uniform3f(translation, beanTX, beanTY, beanTZ);
+}
+
+
+function bufferInfoArray(model) {
       
-    return modelObj.map((vertexAttributes) =>
+    return model.map((vertexAttributes) =>
       twgl.createBufferInfoFromArrays(gl, vertexAttributes)
     );
 }  
@@ -456,5 +511,42 @@ return twgl.createProgramInfo(gl, [vert, frag], (message) => {
     console.log("Skybox Shader compilation error\n" + message);
 });
 }
+
+function beanProgramInfo(gl) {
+  const shaders = {
+      vs: `#version 300 es
+    precision mediump float;
+    in vec3 position;
+    in vec3 normal;
+  
+    uniform vec3 translation;
+    uniform mat4 scaleMatrix;
+    uniform mat4 modelMatrix;
+
+    out vec3 fragNormal;
+    void main () {
+      vec4 newPosition = modelMatrix*vec4(position,1.0);
+      gl_Position = modelMatrix*vec4(position+translation,1.0)*scaleMatrix;
+      mat4 normalMatrix = transpose(inverse(modelMatrix));
+      fragNormal = normalize((normalMatrix*vec4(normal,0)).xyz);
+      gl_PointSize = 2.;
+    }`,
+
+      fs: `#version 300 es
+    precision mediump float;
+    out vec4 outColor;
+    in vec3 fragNormal;
+    uniform int n2c;
+    void main () {
+      vec3 N = normalize(fragNormal);
+      vec3 color = (n2c==0)?abs(N):(N+1.)/2.;
+      outColor = vec4(color, 1);
+    }`,
+  };
+  return twgl.createProgramInfo(gl, [shaders.vs, shaders.fs], (message) => {
+      console.log("Program Shader compilation error\n" + message);
+  });
+}
+
 
 window.onload = main
