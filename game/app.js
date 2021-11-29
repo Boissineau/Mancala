@@ -1,402 +1,492 @@
 
-
-// attributes are inputs/parameters
-// varying are outputs/returns
-let vs = `
-precision mediump float; 
-
-//input
-attribute vec3 vertPosition;
-attribute vec2 vertTexCoord;
+const m4 = twgl.m4 
+const v3 = twgl.v3
 
 
-//output
-varying vec2 fragTexCoord;
+// let boardURL = [
+//     "./assets/board/new/mancala.obj",
+//     "./assets/raymanModel.obj", 
+// ];
 
-//global constants
-uniform mat4 mWorld; //World space
-uniform mat4 mView;  //Camera view 
-uniform mat4 mProj;  //points?
+// let boardURL = ["./assets/raymanModel.obj",]
 
-void main() {
-    fragTexCoord = vertTexCoord;
-    gl_Position = mProj * mView * mWorld * vec4(vertPosition, 1.0);
+let boardURL = [
+  "./assets/board/new/mancala2.obj",
+];
+
+let beanURL = [
+  "./assets/pebble_OBJ/pebble2.obj"
+];
+
+let board = new Models();
+let bean = new Models();
+
+
+import { Models } from "./assets/models.js";
+
+let canvas = document.getElementById("glCanvas");
+let gl = canvas.getContext('webgl2');
+if (!gl) {
+    gl = canvas.getContext('experimental-webgl');
 }
-`;
-
-let fs = `
-
-
-precision mediump float;
-
-//output
-varying vec2 fragTexCoord;
-
-uniform sampler2D sampler;
-
-
-void main(){
-    gl_FragColor = texture2D(sampler, fragTexCoord);
+if (!gl) {
+    console.log('browser does not support webgl');
 }
-`;
 
 
-function main() {
 
-    // 
-    //  Setting up everything 
-    // 
-    let canvas = document.getElementById("glCanvas");
-    let gl = canvas.getContext('webgl');
-    if (!gl) {
-        gl = canvas.getContext('experimental-webgl');
+let texture = twgl.createTexture(gl, {
+    // see more info on options from: https://twgljs.org/docs/module-twgl.html#.TextureOptions
+    // Also see https://twgljs.org/docs/
+    src: './assets/board/boardTexture.jpeg', //or imageURL,
+    // flipY: true,
+})
+
+// let cubemap = twgl.createTexture(gl, {
+//     target: gl.TEXTURE_CUBE_MAP,
+//     src: [
+//         './assets/skybox/pos-x.jpg',
+//         './assets/skybox/neg-x.jpg',
+//         './assets/skybox/pos-y.jpg',
+//         './assets/skybox/neg-y.jpg',
+//         './assets/skybox/pos-z.jpg',
+//         './assets/skybox/neg-z.jpg',
+//     ],
+//     // flipY: true
+// })
+
+let cubemap = twgl.createTexture(gl, {
+    target: gl.TEXTURE_CUBE_MAP,
+    src: [
+        './assets/skybox/space/1.png',
+        './assets/skybox/space/2.png',
+        './assets/skybox/space/3.png',
+        './assets/skybox/space/4.png',
+        './assets/skybox/space/5.png',
+        './assets/skybox/space/6.png',
+    ],
+     flipY: true
+})
+
+
+let skyboxProgram = skyboxProgramInfo(gl);
+let sceneProgram = sceneProgramInfo(gl);
+
+let canvasWidth = gl.canvas.width
+let canvasHeight = gl.canvas.height
+let aspect = canvasWidth/canvasHeight
+let fov = 60
+let near = 0.01
+let far = 20
+let dia = 8.328817059949166
+let radius = dia/2
+let center = [0, 0, 0]
+
+
+let drag = false;
+let click = false; 
+let mouseDownX = 0;
+let mouseDownY = 0; 
+let mouseUpX = 0;
+let mouseUpY = 0; 
+
+
+// canvas.add... for clicking on canvas only
+document.addEventListener('mousedown', (event) => {
+    click = true; 
+    mouseDownX = event.clientX;
+    mouseDownY = event.clientY;
+});
+
+
+document.addEventListener('mousemove', (event) => {
+    if (!click) return;
+    drag = true
+    mouseUpX = event.clientX;
+    mouseUpY = event.clientY;
+}
+);
+
+document.addEventListener('mouseup', () => 
+{
+    click = false; 
+    if (drag){
+        drag = false; 
     }
-    if (!gl) {
-        console.log('browser does not support webgl');
-    }
+});
+
+// zoom in and out 
+let zoom = -7;
+document.addEventListener('wheel', (event) => {
+    let scale = event.deltaY * -0.01;
+    if (zoom + scale >= -3) scale = 0;
+    if (zoom + scale <= -100) scale = 0;
+    zoom += scale;
+});
+
+
+
+let modelMatrix = m4.identity();
+let viewMatrix = m4.identity();
+let projectionMatrix =  m4.identity();
+let identityMatrix = m4.identity();
+
+let xRot = m4.identity();
+let yRot = m4.identity();
+let angle = {x: 0, y: 0}; 
+
+let beans = [] 
+
+
+
+
+
+
+async function main(){
     
 
 
-
-    gl.clearColor(0.75,  0.85, 0.8, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    await board.getModelData(boardURL);
+    await bean.getModelData(beanURL);
+    
+    
+    
+    let boardExtents = board.modelExtents[0]
+    let boardAttributes = board.vertexAttributes[0]
+    let beanExtents = bean.modelExtents[0]
+    let beanAttributes = bean.vertexAttributes[0]
+    
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     gl.frontFace(gl.CCW);
     gl.cullFace(gl.BACK);
-
-
-    // shader stuff
-    let vertexShader = gl.createShader(gl.VERTEX_SHADER);
-    let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-
-    gl.shaderSource(vertexShader, vs);
-    gl.shaderSource(fragmentShader, fs);
-
-
-    gl.compileShader(vertexShader);
-    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)){
-        console.log('ERROR compiling vertex shader', gl.getShaderInfoLog(vertexShader));
-        return;
-    }
-    gl.compileShader(fragmentShader);
-    if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)){
-        console.log('ERROR compiling fragment shader', gl.getShaderInfoLog(fragmentShader));
-        return;
-    }
-
-    let program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-    if(!gl.getProgramParameter(program, gl.LINK_STATUS)){
-        console.log('ERROR linking program', gl.getProgramInfoLog(program));
-        return;
-    }
-
-    gl.validateProgram(program)
-    if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)){
-        console.log('ERROR validating progmra', gl.getProgramInfoLog(program));
-        return;
-    }
-
-    // 
-    //  Create buffer
-    // 
-
-	let boxVertices = 
-	[ // X, Y, Z           U, V
-		// Top
-		-1.0, 1.0, -1.0,   0, 0,
-		-1.0, 1.0, 1.0,    0, 1,
-		1.0, 1.0, 1.0,     1, 1,
-		1.0, 1.0, -1.0,    1, 0,
-
-		// Left
-		-1.0, 1.0, 1.0,    0, 0,
-		-1.0, -1.0, 1.0,   1, 0,
-		-1.0, -1.0, -1.0,  1, 1,
-		-1.0, 1.0, -1.0,   0, 1,
-
-		// Right
-		1.0, 1.0, 1.0,    1, 1,
-		1.0, -1.0, 1.0,   0, 1,
-		1.0, -1.0, -1.0,  0, 0,
-		1.0, 1.0, -1.0,   1, 0,
-
-		// Front
-		1.0, 1.0, 1.0,    1, 1,
-		1.0, -1.0, 1.0,    1, 0,
-		-1.0, -1.0, 1.0,    0, 0,
-		-1.0, 1.0, 1.0,    0, 1,
-
-		// Back
-		1.0, 1.0, -1.0,    0, 0,
-		1.0, -1.0, -1.0,    0, 1,
-		-1.0, -1.0, -1.0,    1, 1,
-		-1.0, 1.0, -1.0,    1, 0,
-
-		// Bottom
-		-1.0, -1.0, -1.0,   1, 1,
-		-1.0, -1.0, 1.0,    1, 0,
-		1.0, -1.0, 1.0,     0, 0,
-		1.0, -1.0, -1.0,    0, 1,
-	];
-
-	let boxIndices =
-	[
-		// Top
-		0, 1, 2,
-		0, 2, 3,
-
-		// Left
-		5, 4, 6,
-		6, 4, 7,
-
-		// Right
-		8, 9, 10,
-		8, 10, 11,
-
-		// Front
-		13, 12, 14,
-		15, 14, 12,
-
-		// Back
-		16, 17, 18,
-		16, 18, 19,
-
-		// Bottom
-		21, 20, 22,
-		22, 20, 23
-	];
-
-
-    let boxVertexBufferObject = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, boxVertexBufferObject);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(boxVertices), gl.STATIC_DRAW);
-
-    let boxIndexBufferObject = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, boxIndexBufferObject);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(boxIndices), gl.STATIC_DRAW);
-
-    {
-        const numComponents = 3;
-        const type = gl.FLOAT; //Type of elements
-        const normalize = false;
-        const stride = 5 * Float32Array.BYTES_PER_ELEMENT; // size of an individual vertex
-        const offset = 0; // offset from the beginning of a single vertex to this attribute
-        let positionAttribLocation = gl.getAttribLocation(program, 'vertPosition');
-        gl.vertexAttribPointer(
-            positionAttribLocation,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(positionAttribLocation);
-    }
-
-    {
-        const numComponents = 2;
-        const type = gl.FLOAT; //Type of elements
-        const normalize = false;
-        const stride = 5 * Float32Array.BYTES_PER_ELEMENT; // size of an individual vertex
-        const offset = 3 * Float32Array.BYTES_PER_ELEMENT; // offset from the beginning of a single vertex to this attribute
-        let texCoordAttribLocation = gl.getAttribLocation(program, 'vertTexCoord');
-        gl.vertexAttribPointer(
-            texCoordAttribLocation,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(texCoordAttribLocation);
-    }
-
-
-    // 
-    // Create texture
-    //
-    let boxTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, boxTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-    gl.texImage2D(
-        gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, 
-        gl.UNSIGNED_BYTE,
-        document.getElementById('crate-image'),
-        );
-    gl.bindTexture(gl.TEXTURE_2D, null);
-
-    //
-    // tell OpenGL state machine which program should be active
-    //
-    gl.useProgram(program); 
-
-    let matWorldUniformLocation = gl.getUniformLocation(program, 'mWorld');
-    let matViewUniformLocation = gl.getUniformLocation(program, 'mView');
-    let matProjUniformLocation = gl.getUniformLocation(program, 'mProj');
-
-
-    let worldMatrix = new Float32Array(16);
-    let viewMatrix = new Float32Array(16);
-    let projMatrix = new Float32Array(16);
-
-
-
-
-    mat4.identity(worldMatrix);
-    mat4.lookAt(viewMatrix, [0, 0, -8], [0, 0, 0], [0, 1, 0]); //eye: position of view, center: point viewer is looking at, up: vec3 pointing up
-    mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width / canvas.height, 0.1, 1000.0);
-
-    gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
-    gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
-    gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
-
-    // 
-    // Main render loop
-    // 
+    gl.viewport(0, 0, canvasWidth, canvasHeight);
+    gl.colorMask(true, true, true, true);
+    gl.depthMask(true);
     
-    let xRot = new Float32Array(16);
-    let yRot = new Float32Array(16);
-    
+    // gl.clearColor(0.3, 0.4, 0.5, 1);
 
-    let identityMatrix = new Float32Array(16);
-    mat4.identity(identityMatrix);
+    getViewMatrix();
+    initBeans()
 
-    let angle = 0; 
+    let render = () => {
+        gl.clearColor(0.0, 0.0, 0.0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        
+        // projectionMatrix = getProjectionMatrix(deg2rad(fov), near, far, dia)
+        // viewMatrix = getViewMatrix(radius, deg2rad(angle.x), deg2rad(angle.y), center, dia);
 
-    // Mouse event listener
-    let drag = false;
-    let click = false; 
-    let mouseDownX = 1;
-    let mouseDownY = 1; 
-
-    // canvas.add... for clicking on canvas only
-    document.addEventListener('mousedown', (event) => {
-        click = true; 
-        mouseDownX = event.clientX;
-        mouseDownY = event.clientY;
-    });
-
-    let mouseUpX = 1;
-    let mouseUpY = 1; 
-    document.addEventListener('mousemove', (event) => {
-        if (!click) return;
-        drag = true
-        mouseUpX = event.clientX;
-        mouseUpY = event.clientY;
-    }
-    );
-    
-    document.addEventListener('mouseup', () => 
-    {
-        click = false; 
-        if (drag){
-            drag = false; 
-        }
-    });
-
-    // zoom in and out 
-    let zoom = -8;
-    document.addEventListener('wheel', (event) => {
-        let scale = event.deltaY * -0.01;
-        if (zoom + scale >= -3) scale = 0;
-        if (zoom + scale <= -20) scale = 0;
-        zoom += scale;
-    });
-
-
-    let render = function(){
-
-        // recreate the matrices for zoom 
-        mat4.lookAt(viewMatrix, [0, 0, zoom], [0, 0, 0], [0, 1, 0]);
-        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
-        gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
-        gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
-    
-        // rotate the object  //one full rotation every 6 seconds
-        // finds x rotation 
-
+        projectionMatrix = m4.perspective(deg2rad(fov), aspect, 1, 2000);
+        
         if (drag) {
-            angle = getAngle(mouseDownX, mouseDownY, mouseUpX, mouseUpY);
-            mat4.rotate(xRot, identityMatrix, angle.x / 4, [0, 1, 0]);
-            // finds y rotation
-            mat4.rotate(yRot, identityMatrix, angle.y / 16, [1, 0, 0]);
-            //multiplies them together to create the new look
-            mat4.mul(worldMatrix, xRot, yRot);
-        } else {
+            getAngle(mouseUpX, mouseUpY);
+            getViewMatrix();
+        }
+        
+        renderScene(sceneProgram, boardAttributes, texture, false);
 
-            // angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-            // mat4.rotate(xRot, identityMatrix, angle, [0, 1, 0]);
-            // // finds y rotation
-            // mat4.rotate(yRot, identityMatrix, angle / 4, [1, 0, 0]);
-            // //multiplies them together to create the new look
-            // mat4.mul(worldMatrix, xRot, yRot);
+        for (let i = 0; i < 48; i++){
+            renderScene(sceneProgram, beanAttributes, texture, true, beans[i]);
+        }
+        
 
+    
+
+        renderSkybox(skyboxProgram.program);
+      requestAnimationFrame(render)
+    }
+    requestAnimationFrame(render)
+
+    
+}
+
+
+function renderScene(programInfo, attributes, texture, bean, translations){
+
+
+    let materialColor = [1, 0, 0];
+    let specularColor = [0.6901960784313725, 0.09019607843137255, 0.09019607843137255]; 
+    let K_s = 0; 
+    let shininess = 100;
+    let ambient = 0;
+    let light = [-1.1137182712554932, 8.420951843261719, 0, 1];
+    let eyePosition = center;
+    // let x = Math.cos(deg2rad(angle.x)) * radius;
+    // let y = Math.sin(deg2rad(angle.y)) * radius;
+
+    let angleSeconds = performance.now() / 1000 / 6 * 2 * Math.PI;
+
+    let matrix = modelMatrix
+
+    if (bean) {
+        let zoom2 = zoom + 0.5
+        let x = deg2rad(angle.x) + translations[0]
+        let z = translations[1]
+        let y = deg2rad(angle.y)+ zoom2 +translations[2]
+        matrix = m4.translate(matrix, [x, z, y])
+        matrix = m4.scale(matrix, [0.015, 0.015, 0.015])
+    } else{
+        matrix = m4.translate(matrix, [deg2rad(angle.x), 0, deg2rad(angle.y)+zoom])
+        
+    }
+    
+    matrix = m4.rotateX(matrix, 90);
+
+    const uniforms = {
+        modelMatrix: matrix,
+        viewMatrix: viewMatrix,
+        projectionMatrix: projectionMatrix,
+        materialColor,
+        specularColor,
+        K_s,
+        shininess,
+        ambient,
+        light,
+        eyePosition,
+        tex: texture, 
+        bean: bean
+    };
+
+    gl.useProgram(programInfo.program);
+    twgl.setUniforms(programInfo, uniforms);
+    let bufferInfoArr = bufferInfoArray(attributes)
+
+    bufferInfoArr.forEach((bufferInfo) => {
+      twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+      twgl.drawBufferInfo(gl, bufferInfo, gl["TRIANGLES"]);
+    });
+}
+
+function renderSkybox(program) {
+    let skyboxLocation = gl.getUniformLocation(program, "cubemap");
+    let viewDirectionProjectionInverseLocation = gl.getUniformLocation(program, "invViewProjectionMatrix");
+    let skyboxBuffer = skyboxBufferInfo();
+    gl.useProgram(program);
+
+    var viewDirectionProjectionMatrix =
+    m4.multiply(projectionMatrix, viewMatrix);
+    var viewDirectionProjectionInverseMatrix =
+        m4.inverse(viewDirectionProjectionMatrix);
+    gl.uniformMatrix4fv(
+        viewDirectionProjectionInverseLocation, false,
+        viewDirectionProjectionInverseMatrix);
+        gl.uniform1i(skyboxLocation, 0);
+        
+    // const uniforms = {
+        //   cubemap: cubemap,
+        //   invViewProjectionMatrix: viewDirectionProjectionInverseMatrix
+        // };
+        // twgl.setUniforms(skyboxProgram, uniforms);
+    gl.depthFunc(gl.LEQUAL);
+    twgl.setBuffersAndAttributes(gl, skyboxProgram, skyboxBuffer);
+    twgl.drawBufferInfo(gl, skyboxBuffer);
+    gl.depthFunc(gl.LESS);
+}
+
+
+
+function bufferInfoArray(model) {
+      
+    return model.map((vertexAttributes) =>
+      twgl.createBufferInfoFromArrays(gl, vertexAttributes)
+    );
+}  
+
+function getViewMatrix(r) {
+
+        // camera going in circle 2 units from origin looking at origin
+        // var cameraPosition = [Math.cos(angleSeconds*0.1), 0, Math.sin(angleSeconds*0.1)];
+        
+        // position and orientation of the camera in the world 
+        let cameraPosition = [0, 0, 0]
+        var target = center;
+        var up = [0, 1, 0];
+        
+        m4.rotationY(deg2rad(angle.x), xRot) //y is left/right
+        m4.rotationX(deg2rad(angle.y), yRot) //x is up/down
+                                             //Z is distance from origin
+        let cameraMatrix = m4.multiply(xRot, yRot)
+        cameraMatrix = m4.translate(cameraMatrix, [0, 0, 0])
+        // cameraMatrix = m4.lookAt(cameraPosition, target, up);
+
+        // Make a view matrix from the camera matrix.
+        viewMatrix = m4.inverse(cameraMatrix);
+        
+        // We only care about direciton so remove the translation
+        // viewMatrix[12] = 0;
+        // viewMatrix[13] = 0;
+        // viewMatrix[14] = 0;
+
+}
+
+
+function skyboxBufferInfo(){
+    return twgl.createBufferInfoFromArrays(gl, {
+        position: {
+          numComponents: 2,
+          data: [-1, -1, 1, -1, 1, 1, 1, 1, -1, 1, -1, -1]
+        }
+      })
+} 
+
+
+function getAngle(x, y){
+    x -= canvasWidth/2
+    y -= canvasHeight/2
+    y *= -1
+    if (x > 0 && x != 0) angle.x -= 0.2
+    else angle.x += 0.2
+    if (y > 0 && y != 0) angle.y += 0.1
+    else angle.y -= 0.1
+}
+
+
+
+function initBeans(){
+    let numBeans = 48;
+    let positions = getBeanPositions();
+
+    function getBeanPositions(){
+        return [
+            [-2.4, -0.5, 0],
+            [-1.4, -0.5, 0],
+            [-0.4, -0.5, 0],
+            [0.4, -0.5, 0],
+            [1.4, -0.5, 0],
+            [2.4, -0.5, 0],
+            [3.3, 0, 0],
+            [2.4, 0.3, 0],
+            [1.4, 0.3, 0],
+            [0.4, 0.3, 0],
+            [-0.4, 0.3, 0],
+            [-1.4, 0.3, 0],
+            [-2.4, 0.3, 0],
+            [-3.3, 0, 0],
+        ]
+    }
+
+    for (let i = 0; i < numBeans/4+1; i++){
+        for (let j = 0; j < 4; j++){
+            if (i == 6) break 
+            beans.push(positions[i])
+        }
+    }
+}
+
+function deg2rad(deg){
+    return (Math.PI * deg) / 180
+}
+
+function sceneProgramInfo(gl){
+    const shaders = {
+      vs: `#version 300 es
+      precision mediump float;
+
+      in vec3 position;
+      in vec3 normal;
+      in vec2 uv; 
+
+      uniform mat4 modelMatrix;
+      uniform mat4 viewMatrix;
+      uniform mat4 projectionMatrix;
+ 
+      out vec3 fragNormal;
+      out vec3 fragPosition; 
+      out vec2 fragUV; 
+
+      void main () {
+        vec4 newPosition = modelMatrix*vec4(position,1);
+        fragPosition = newPosition.xyz; 
+        
+        gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4(position,1);
+        mat4 normalMatrix = transpose(inverse(modelMatrix));
+        fragNormal = normalize((normalMatrix*vec4(normal,0)).xyz);
+        gl_PointSize = 2.;
+        fragUV = uv;
+      }`,
+  
+      fs: `#version 300 es
+
+
+      precision mediump float;
+
+      in vec3 fragNormal; 
+      in vec3 fragPosition; 
+      in vec2 fragUV;
+
+      out vec4 outColor;
+
+      uniform vec4 light;
+      uniform vec3 eyePosition;
+      uniform vec3 materialColor;
+      uniform float K_s, shininess, ambient;
+      uniform vec3 specularColor;
+      uniform sampler2D tex;
+      uniform bool bean;
+
+
+      void main () {
+        
+        vec3 N = normalize(fragNormal);
+        vec3 L;
+        if (light.w == 1.) L = normalize(light.xyz - fragPosition);
+        else L = normalize(light.xyz);
+  
+        vec3 diffuse = materialColor*clamp(dot(L,N), 0.,1.); //Compute diffuse color
+  
+        vec3 V = normalize(eyePosition - fragPosition);
+        vec3 H = normalize(L + V);
+        
+        if(bean){
+
+            // for colour 
+            vec3 specular = specularColor*pow( clamp(dot(H,N),0.,1.),shininess); //Compute specular color
+            vec3 color = ambient*materialColor + (1.-K_s)*diffuse + K_s*specular;
+            outColor = vec4(color, 1);
+        }
+        else{
+            vec3 R = reflect(-V, N);
+            vec3 texColor = texture( tex, fragUV ).rgb;
+            outColor = vec4(texColor, 1);
         }
 
 
+      }`
+    };
+    return twgl.createProgramInfo(gl, [shaders.vs, shaders.fs], (message) => {
+      console.log("Program Shader compilation error\n" + message);
+    });
+  }
 
+function skyboxProgramInfo() {
+const vert = `#version 300 es
+    precision mediump float;
 
+    in vec4 position;
+    out vec4 fragPosition;
+    void main() {
+        fragPosition = position;
+        gl_Position = position;
+        gl_Position.z = 1.0; 
+    }`,
+    frag = `#version 300 es
 
+    precision mediump float;
 
+    uniform samplerCube cubemap;
+    uniform mat4 invViewProjectionMatrix;
 
-        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+    in vec4 fragPosition;
+    out vec4 outColor;
 
-
-        gl.clearColor(0.75, 0.85, 0.8, 1.0);
-        gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
-
-        gl.bindTexture(gl.TEXTURE_2D, boxTexture);
-        gl.activeTexture(gl.TEXTURE0);
-
-        gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
-        requestAnimationFrame(render);
-    }
-
-    requestAnimationFrame(render);
-
-
-
-    
-};
-
-
-function getAngle(x1, y1, x2, y2){
-    y1 = -y1; 
-    y2 = -y2;
-
-    var distY = y2-y1; //opposite
-    var distX = x2-x1; //adjacent
-
-
-
-    if (distX == 0) distX = 0.01;
-    if (distY == 0) distY = 0.01;
-    angles = {
-        x: distX/100,
-        y: distY/10
-    }
-    return angles //return angle in degrees
-    
-
+    void main () {
+    vec4 direction = invViewProjectionMatrix * fragPosition;
+    outColor = texture(cubemap, normalize(direction.xyz/direction.w));
+    }`;
+return twgl.createProgramInfo(gl, [vert, frag], (message) => {
+    console.log("Skybox Shader compilation error\n" + message);
+});
 }
 
 
-
-
-
-Math.degrees = function(radians) {
-    return radians*(180/Math.PI);
-}
-
-
-
-
-
-
-
+window.onload = main
