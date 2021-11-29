@@ -170,14 +170,15 @@ async function main(){
     gl.depthMask(true);
     
     // gl.clearColor(0.3, 0.4, 0.5, 1);
-
+    
     
     viewMatrix = getViewMatrix(
         radius,
-        deg2rad(angle.x),
-        deg2rad(angle.y),
+        angle.x,
+        angle.y,
         boardDim
     )
+    
 
     let render = () => {
         gl.clearColor(0.0, 0.0, 0.0, 1);
@@ -217,7 +218,7 @@ async function main(){
             )
         projectionMatrix = getProjectionMatrix(zoom, near, far, boardDim)
 
-        renderScene(
+        renderBoard(
           sceneProgram,
           viewMatrix,
           projectionMatrix,
@@ -226,14 +227,19 @@ async function main(){
 
         beanViewMatrix = getViewMatrix(1, angle.x/4, angle.y/16, beanDim),
         beanProjectionMatrix = getProjectionMatrix(zoom, near, far, beanDim)
+        
+
+
 
         renderBeans(
           beanProgram,
           beanViewMatrix,
-          beanProjectionMatrix,
-          beanObj
+          projectionMatrix, //maybe change this to beanProjectionMatrix? 
+          beanObj,
+          10
         );
 
+        
         renderSkybox();
 
         // console.log(pixel)
@@ -271,7 +277,7 @@ function getProjectionMatrix (fov, near, far, model) {
 }
 
 
-function renderScene(programInfo, viewMatrix, projectionMatrix, model){
+function renderBoard(programInfo, viewMatrix, projectionMatrix, model){
     
     let materialColor = [0, 0.6823529411764706, 1];
     let specularColor = [0.6901960784313725, 0.09019607843137255, 0.09019607843137255]; 
@@ -325,10 +331,11 @@ function renderSkybox() {
     gl.depthFunc(gl.LESS);
   }
 
-function renderBeans(programInfo, viewMatrix, projectionMatrix, model) {
+function renderBeans(programInfo, viewMatrix, projectionMatrix, model, translationAmount=0) {
 
     // Scaling beans
     // let beanSX = 0.00125, beanSY = 0.00125, beanSZ = 0.00125;
+    
     let beanSX = 0.1, beanSY = 0.1, beanSZ = 0.1;
 
     let beanMatrix =  new Float32Array([
@@ -340,17 +347,18 @@ function renderBeans(programInfo, viewMatrix, projectionMatrix, model) {
     let scaleMatrix = gl.getUniformLocation(programInfo.program, 'scaleMatrix');
 
     // Translating beans
-    let beanTX = 0.0, beanTY = 0.0, beanTZ = 0.0
+    let beanTX = 10+translationAmount, beanTY = 1, beanTZ = 0.0
     let translation = gl.getUniformLocation(programInfo.program, 'translation' );
-
+    
     gl.useProgram(programInfo.program);
     const uniforms = {
         n2c: 0,
         modelMatrix: beanModelMatrix,
         viewMatrix: viewMatrix,
         projectionMatrix: projectionMatrix
-
+        
     };
+    gl.uniformMatrix4fv(scaleMatrix,false,beanMatrix);
     twgl.setUniforms(programInfo, uniforms);
     let bufferInfoArr = bufferInfoArray(model);
     bufferInfoArr.forEach((bufferInfo) => {
@@ -358,7 +366,6 @@ function renderBeans(programInfo, viewMatrix, projectionMatrix, model) {
         twgl.drawBufferInfo(gl, bufferInfo, gl["TRIANGLES"]);
     });
 
-    gl.uniformMatrix4fv(scaleMatrix,false,beanMatrix);
     gl.uniform3f(translation, beanTX, beanTY, beanTZ);
 }
 
@@ -384,13 +391,13 @@ function getAngle(x1, y1, x2, y2){
     y1 = -y1; 
     y2 = -y2;
 
-    var distY = y2-y1; //opposite
-    var distX = x2-x1; //adjacent
+    var distY = (y2-y1); //opposite
+    var distX = (x2-x1); //adjacent
 
 
 
-    if (distX == 0) distX = 0.01;
-    if (distY == 0) distY = 0.01;
+    // if (distX == 0) distX = 0.1;
+    // if (distY == 0) distY = 0.1;
     let angles = {
         x: distX/100,
         y: distY/10
@@ -559,6 +566,7 @@ function beanProgramInfo(gl) {
     out vec3 fragNormal;
     void main () {
       vec4 newPosition = modelMatrix*vec4(position,1.0);
+      
       gl_Position = projectionMatrix * viewMatrix * modelMatrix*vec4(position+translation,1.0)*scaleMatrix;
       mat4 normalMatrix = transpose(inverse(modelMatrix));
       fragNormal = normalize((normalMatrix*vec4(normal,0)).xyz);
