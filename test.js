@@ -122,11 +122,11 @@ document.addEventListener('mouseup', () =>
 });
 
 // zoom in and out 
-let zoom = -30;
+let zoom = -50;
 document.addEventListener('wheel', (event) => {
     let scale = event.deltaY * -0.01;
     if (zoom + scale >= -3) scale = 0;
-    if (zoom + scale <= -50) scale = 0;
+    if (zoom + scale <= -100) scale = 0;
     zoom += scale;
 });
 
@@ -141,7 +141,7 @@ let beanProjectionMatrix = undefined
 let identityMatrix = m4.identity();
 let xRot = m4.identity();
 let yRot = m4.identity();
-let angle = {x: -60, y: 0}; 
+let angle = {x: 0, y: -85}; 
 
 
 
@@ -247,7 +247,7 @@ async function main(){
 function deg2rad(deg){
     return (Math.PI * deg) / 180
 }
-
+let eye = undefined 
 function getViewMatrix(r, x_angle, y_angle, model) {
     const gazeDirection = 
     m4.transformDirection(
@@ -256,7 +256,7 @@ function getViewMatrix(r, x_angle, y_angle, model) {
           m4.rotationX(-y_angle)),
     [0, 0, 1]
     );
-    let eye = v3.add(model.center, v3.mulScalar(gazeDirection, r*model.dia)); 
+    eye = v3.add(model.center, v3.mulScalar(gazeDirection, r*model.dia)); 
     const cameraMatrix = m4.lookAt(eye, model.center, [0, 1, 0]);
     return m4.inverse(cameraMatrix);
 }
