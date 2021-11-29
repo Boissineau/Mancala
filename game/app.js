@@ -92,14 +92,14 @@ let mouseUpY = 0;
 
 
 // canvas.add... for clicking on canvas only
-document.addEventListener('mousedown', (event) => {
+canvas.addEventListener('mousedown', (event) => {
     click = true; 
     mouseDownX = event.clientX;
     mouseDownY = event.clientY;
 });
 
 
-document.addEventListener('mousemove', (event) => {
+canvas.addEventListener('mousemove', (event) => {
     if (!click) return;
     drag = true
     mouseUpX = event.clientX;
@@ -107,7 +107,7 @@ document.addEventListener('mousemove', (event) => {
 }
 );
 
-document.addEventListener('mouseup', () => 
+canvas.addEventListener('mouseup', () => 
 {
     click = false; 
     if (drag){
@@ -117,15 +117,27 @@ document.addEventListener('mouseup', () =>
 
 // zoom in and out 
 let zoom = -7;
-document.addEventListener('wheel', (event) => {
+canvas.addEventListener('wheel', (event) => {
     let scale = event.deltaY * -0.01;
     if (zoom + scale >= -3) scale = 0;
     if (zoom + scale <= -100) scale = 0;
     zoom += scale;
 });
 
-
-
+let rotate = false;
+document.getElementById("1").addEventListener('click', () => {clickedCell = 12});
+document.getElementById("2").addEventListener('click', () => {clickedCell = 11});
+document.getElementById("3").addEventListener('click', () => {clickedCell = 10});
+document.getElementById("4").addEventListener('click', () => {clickedCell = 9});
+document.getElementById("5").addEventListener('click', () => {clickedCell = 8});
+document.getElementById("6").addEventListener('click', () => {clickedCell = 7});
+document.getElementById("7").addEventListener('click', () => {clickedCell = 0});
+document.getElementById("8").addEventListener('click', () => {clickedCell = 1});
+document.getElementById("9").addEventListener('click', () => {clickedCell = 2});
+document.getElementById("10").addEventListener('click', () => {clickedCell = 3});
+document.getElementById("11").addEventListener('click', () => {clickedCell = 4});
+document.getElementById("12").addEventListener('click', () => {clickedCell = 5});
+document.getElementById("rotate").addEventListener('click', () => {rotate = !rotate});
 let modelMatrix = m4.identity();
 let viewMatrix = m4.identity();
 let projectionMatrix =  m4.identity();
@@ -136,7 +148,8 @@ let yRot = m4.identity();
 let angle = {x: 0, y: 0}; 
 
 let beans = [] 
-
+let cells = []
+let clickedCell = undefined
 
 
 
@@ -167,9 +180,13 @@ async function main(){
     // gl.clearColor(0.3, 0.4, 0.5, 1);
 
     getViewMatrix();
-    initBeans()
+    initBeans();
+
 
     let render = () => {
+        setCellValues();
+        if(clickedCell != null) console.log(clickedCell);
+         
         gl.clearColor(0.0, 0.0, 0.0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         
@@ -193,13 +210,28 @@ async function main(){
     
 
         renderSkybox(skyboxProgram.program);
-      requestAnimationFrame(render)
+        clickedCell = undefined
+        requestAnimationFrame(render)
     }
     requestAnimationFrame(render)
 
     
 }
 
+function setCellValues(){
+    document.getElementById("1").innerHTML = document.getElementById("1").value 
+    document.getElementById("2").innerHTML = document.getElementById("2").value 
+    document.getElementById("3").innerHTML = document.getElementById("3").value 
+    document.getElementById("4").innerHTML = document.getElementById("4").value 
+    document.getElementById("5").innerHTML = document.getElementById("5").value 
+    document.getElementById("6").innerHTML = document.getElementById("6").value 
+    document.getElementById("7").innerHTML = document.getElementById("7").value 
+    document.getElementById("8").innerHTML = document.getElementById("8").value 
+    document.getElementById("9").innerHTML = document.getElementById("9").value 
+    document.getElementById("10").innerHTML = document.getElementById("10").value
+    document.getElementById("11").innerHTML = document.getElementById("11").value
+    document.getElementById("12").innerHTML = document.getElementById("12").value
+}
 
 function renderScene(programInfo, attributes, texture, bean, translations){
 
@@ -225,13 +257,18 @@ function renderScene(programInfo, attributes, texture, bean, translations){
         let y = deg2rad(angle.y)+ zoom2 +translations[2]
         matrix = m4.translate(matrix, [x, z, y])
         matrix = m4.scale(matrix, [0.015, 0.015, 0.015])
+        matrix = m4.rotateX(matrix, angleSeconds);
+
     } else{
         matrix = m4.translate(matrix, [deg2rad(angle.x), 0, deg2rad(angle.y)+zoom])
-        
+        matrix = m4.rotateX(matrix, 90);
     }
-    
-    matrix = m4.rotateX(matrix, 90);
+    if (rotate) {
+        matrix = m4.rotateX(matrix, angleSeconds);
+        matrix = m4.rotateY(matrix, angleSeconds);
+    }
 
+    
     const uniforms = {
         modelMatrix: matrix,
         viewMatrix: viewMatrix,
@@ -302,8 +339,10 @@ function getViewMatrix(r) {
         var target = center;
         var up = [0, 1, 0];
         
-        m4.rotationY(deg2rad(angle.x), xRot) //y is left/right
-        m4.rotationX(deg2rad(angle.y), yRot) //x is up/down
+        if (!rotate){
+            m4.rotationY(deg2rad(angle.x), xRot) //y is left/right
+            m4.rotationX(deg2rad(angle.y), yRot) //x is up/down
+        }
                                              //Z is distance from origin
         let cameraMatrix = m4.multiply(xRot, yRot)
         cameraMatrix = m4.translate(cameraMatrix, [0, 0, 0])
@@ -372,6 +411,7 @@ function initBeans(){
         }
     }
 }
+
 
 function deg2rad(deg){
     return (Math.PI * deg) / 180
