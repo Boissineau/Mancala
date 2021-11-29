@@ -122,11 +122,11 @@ document.addEventListener('mouseup', () =>
 });
 
 // zoom in and out 
-let zoom = -8;
+let zoom = -30;
 document.addEventListener('wheel', (event) => {
     let scale = event.deltaY * -0.01;
     if (zoom + scale >= -3) scale = 0;
-    if (zoom + scale <= -20) scale = 0;
+    if (zoom + scale <= -50) scale = 0;
     zoom += scale;
 });
 
@@ -154,7 +154,6 @@ async function main(){
     
     await board.getModelData(boardURL);
     await bean.getModelData(beanURL);
-
     boardDim = board.modelExtents[0]
     beanDim = bean.modelExtents[0]
     cameraLookAt = boardDim.center
@@ -206,16 +205,17 @@ async function main(){
             // mat4.mul(modelMatrix, xRot, yRot);
         }
         
+        
+        
         // mat4.lookAt(viewMatrix, [0, 0, zoom], [0, 0, 0], [0, 1, 0])
 
-        
         viewMatrix = getViewMatrix(
             radius,
             angle.x/4,
             angle.y/16,
             boardDim
-        )
-        projectionMatrix = getProjectionMatrix(fov_Y, near, far, boardDim)
+            )
+        projectionMatrix = getProjectionMatrix(zoom, near, far, boardDim)
 
         renderScene(
           sceneProgram,
@@ -225,7 +225,7 @@ async function main(){
         );
 
         beanViewMatrix = getViewMatrix(1, angle.x/4, angle.y/16, beanDim),
-        beanProjectionMatrix = getProjectionMatrix(fov_Y, near, far, beanDim)
+        beanProjectionMatrix = getProjectionMatrix(zoom, near, far, beanDim)
 
         renderBeans(
           beanProgram,
@@ -252,12 +252,12 @@ function getViewMatrix(r, x_angle, y_angle, model) {
     const gazeDirection = 
     m4.transformDirection(
       m4.multiply(
-          m4.rotationY(-x_angle), 
-          m4.rotationX(y_angle)),
+          m4.rotationY(x_angle), 
+          m4.rotationX(-y_angle)),
     [0, 0, 1]
     );
-    let eye = v3.add(cameraLookAt, v3.mulScalar(gazeDirection, r*model.dia)); 
-    const cameraMatrix = m4.lookAt(eye, cameraLookAt, [0, 1, 0]);
+    let eye = v3.add(model.center, v3.mulScalar(gazeDirection, r*model.dia)); 
+    const cameraMatrix = m4.lookAt(eye, model.center, [0, 1, 0]);
     return m4.inverse(cameraMatrix);
 }
 
