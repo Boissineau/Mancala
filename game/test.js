@@ -72,18 +72,20 @@ let board = new Models();
 let bean = new Models();
 
 
-let near = 0.1
-let far = 2
+let near = 0.01
+let far = 20
 let radius = 1
 let canvasWidth = gl.canvas.width
 let canvasHeight = gl.canvas.height
 let aspect = canvasWidth / canvasHeight
 let modelDim = undefined
+let boardDim = undefined
+let beanDim = undefined
 let cameraLookAt = undefined
-let modelObj = undefined 
+let boardObj = undefined 
 let beanObj = undefined 
 let y_angle = 0
-let fov_Y = 90
+let fov_Y = 60
 
 let x_angle = undefined
 
@@ -124,18 +126,22 @@ let zoom = -8;
 document.addEventListener('wheel', (event) => {
     let scale = event.deltaY * -0.01;
     if (zoom + scale >= -3) scale = 0;
-    if (zoom + scale <= -10) scale = 0;
+    if (zoom + scale <= -20) scale = 0;
     zoom += scale;
 });
 
 
 let modelMatrix = m4.identity();
+let beanModelMatrix = m4.identity();
 let viewMatrix = undefined
 let projectionMatrix = undefined
+let beanViewMatrix = undefined
+let beanProjectionMatrix = undefined 
+
 let identityMatrix = m4.identity();
 let xRot = m4.identity();
 let yRot = m4.identity();
-let angle = {x: 0, y: 0}; 
+let angle = {x: -60, y: 0}; 
 
 
 
@@ -149,9 +155,10 @@ async function main(){
     await board.getModelData(boardURL);
     await bean.getModelData(beanURL);
 
-    modelDim = board.modelExtents[0]
-    cameraLookAt = modelDim.center
-    modelObj = board.vertexAttributes[0]
+    boardDim = board.modelExtents[0]
+    beanDim = bean.modelExtents[0]
+    cameraLookAt = boardDim.center
+    boardObj = board.vertexAttributes[0]
     beanObj = bean.vertexAttributes[0];
 
 
@@ -164,7 +171,14 @@ async function main(){
     gl.depthMask(true);
     
     // gl.clearColor(0.3, 0.4, 0.5, 1);
+
     
+    viewMatrix = getViewMatrix(
+        radius,
+        deg2rad(angle.x),
+        deg2rad(angle.y),
+        boardDim
+    )
 
     let render = () => {
         gl.clearColor(0.0, 0.0, 0.0, 1);
@@ -172,15 +186,18 @@ async function main(){
 
         
         
+
         if (drag) {
             angle = getAngle(mouseDownX, mouseDownY, mouseUpX, mouseUpY);
-            mat4.rotate(xRot, xRot, angle.x / 40, [0, 1, 0]);
+            mat4.rotate(xRot, xRot, angle.x / 400, [0, 1, 0]);
             // finds y rotation
-            mat4.rotate(yRot, yRot, angle.y / 160, [1, 0, 0]);
+            mat4.rotate(yRot, yRot, angle.y / 1600, [1, 0, 0]);
             //multiplies them together to create the new look
             mat4.mul(modelMatrix, xRot, yRot);
-        } else {
+            mat4.mul(beanModelMatrix, xRot, yRot);
 
+
+        } else {
             // let angleSeconds = performance.now() / 1000 / 6 * 2 * Math.PI;
             // angle.x = angleSeconds
             // angle.y = angleSeconds / 4
@@ -191,23 +208,26 @@ async function main(){
             // mat4.mul(modelMatrix, xRot, yRot);
         }
         
-        viewMatrix = getViewMatrix(
-            radius,
-            deg2rad(angle.x),
-            deg2rad(angle.y)
-        )
-        mat4.lookAt(viewMatrix, [0, 0, zoom], [0, 0, 0], [0, 1, 0]);
+        // mat4.lookAt(viewMatrix, [0, 0, zoom], [0, 0, 0], [0, 1, 0])
+        // mat4.lookAt(viewMatrix, [0, 0, zoom], cameraLookAt, [0, 1, 0]);
 
-        projectionMatrix = getProjectionMatrix(fov_Y, near, far)
+
+        projectionMatrix = getProjectionMatrix(fov_Y, near, far, boardDim)
+
         renderScene(
           sceneProgram,
           viewMatrix,
           projectionMatrix,
-          modelObj
+          boardObj
         );
+
+        beanViewMatrix = getViewMatrix(1, angle.x, angle.y, beanDim),
+        beanProjectionMatrix = getProjectionMatrix(fov_Y, near, far, beanDim)
 
         renderBeans(
           beanProgram,
+          beanViewMatrix,
+          beanProjectionMatrix,
           beanObj
         );
 
@@ -225,24 +245,22 @@ function deg2rad(deg){
     return (Math.PI * deg) / 180
 }
 
-function getViewMatrix(r, x_angle, y_angle) {
+function getViewMatrix(r, x_angle, y_angle, model) {
     const gazeDirection = m4.transformDirection(
       m4.multiply(m4.rotationY(y_angle), m4.rotationX(x_angle)),
       [0, 0, 1]
     );
-    const eye = v3.add(cameraLookAt, v3.mulScalar(gazeDirection, r*modelDim.dia));
-    
-    
+    let eye = v3.add(cameraLookAt, v3.mulScalar(gazeDirection, r*model.dia)); 
     const cameraMatrix = m4.lookAt(eye, cameraLookAt, [0, 1, 0]);
     return m4.inverse(cameraMatrix);
 }
 
-function getProjectionMatrix (fov, near, far) {
+function getProjectionMatrix (fov, near, far, model) {
     return m4.perspective(
       deg2rad(fov),
       aspect,
-      near * modelDim.dia,
-      far * modelDim.dia
+      near * model.dia,
+      far * model.dia
     );
 }
 
@@ -257,6 +275,7 @@ function renderScene(programInfo, viewMatrix, projectionMatrix, model){
     let light = [-1.1137182712554932, 8.420951843261719, 0, 1];
     let eyePosition = cameraLookAt;
     
+
 
     const uniforms = {
         n2c: 0,
@@ -300,7 +319,7 @@ function renderSkybox() {
     gl.depthFunc(gl.LESS);
   }
 
-  function renderBeans(programInfo, model) {
+function renderBeans(programInfo, viewMatrix, projectionMatrix, model) {
 
     // Scaling beans
     // let beanSX = 0.00125, beanSY = 0.00125, beanSZ = 0.00125;
@@ -317,11 +336,13 @@ function renderSkybox() {
     // Translating beans
     let beanTX = 0.0, beanTY = 0.0, beanTZ = 0.0
     let translation = gl.getUniformLocation(programInfo.program, 'translation' );
-    
+
     gl.useProgram(programInfo.program);
     const uniforms = {
         n2c: 0,
-        modelMatrix: viewMatrix,
+        modelMatrix: beanModelMatrix,
+        viewMatrix: viewMatrix,
+        projectionMatrix: projectionMatrix
 
     };
     twgl.setUniforms(programInfo, uniforms);
@@ -402,7 +423,10 @@ function sceneProgramInfo(gl){
       void main () {
         vec4 newPosition = modelMatrix*vec4(position,1);
         fragPosition = newPosition.xyz; 
+        
         gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4(position,1);
+        // gl_Position = modelMatrix*vec4(position,1.0);
+
         mat4 normalMatrix = transpose(inverse(modelMatrix));
         fragNormal = normalize((normalMatrix*vec4(normal,0)).xyz);
         gl_PointSize = 2.;
@@ -518,15 +542,18 @@ function beanProgramInfo(gl) {
     precision mediump float;
     in vec3 position;
     in vec3 normal;
+
   
     uniform vec3 translation;
     uniform mat4 scaleMatrix;
     uniform mat4 modelMatrix;
+    uniform mat4 viewMatrix;
+    uniform mat4 projectionMatrix;
 
     out vec3 fragNormal;
     void main () {
       vec4 newPosition = modelMatrix*vec4(position,1.0);
-      gl_Position = modelMatrix*vec4(position+translation,1.0)*scaleMatrix;
+      gl_Position = projectionMatrix * viewMatrix * modelMatrix*vec4(position+translation,1.0)*scaleMatrix;
       mat4 normalMatrix = transpose(inverse(modelMatrix));
       fragNormal = normalize((normalMatrix*vec4(normal,0)).xyz);
       gl_PointSize = 2.;
