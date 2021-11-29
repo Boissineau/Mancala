@@ -207,7 +207,7 @@ async function main(){
         }
         
         // mat4.lookAt(viewMatrix, [0, 0, zoom], [0, 0, 0], [0, 1, 0])
-        // mat4.lookAt(viewMatrix, [0, 0, zoom], cameraLookAt, [0, 1, 0]);
+
         
         viewMatrix = getViewMatrix(
             radius,
@@ -249,9 +249,12 @@ function deg2rad(deg){
 }
 
 function getViewMatrix(r, x_angle, y_angle, model) {
-    const gazeDirection = m4.transformDirection(
-      m4.multiply(m4.rotationY(y_angle), m4.rotationX(x_angle)),
-      [0, 0, 1]
+    const gazeDirection = 
+    m4.transformDirection(
+      m4.multiply(
+          m4.rotationY(-x_angle), 
+          m4.rotationX(y_angle)),
+    [0, 0, 1]
     );
     let eye = v3.add(cameraLookAt, v3.mulScalar(gazeDirection, r*model.dia)); 
     const cameraMatrix = m4.lookAt(eye, cameraLookAt, [0, 1, 0]);
