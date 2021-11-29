@@ -189,14 +189,12 @@ async function main(){
 
         if (drag) {
             angle = getAngle(mouseDownX, mouseDownY, mouseUpX, mouseUpY);
-            mat4.rotate(xRot, xRot, angle.x / 400, [0, 1, 0]);
+            // mat4.rotate(xRot, xRot, angle.x / 400, [0, 1, 0]);
             // finds y rotation
-            mat4.rotate(yRot, yRot, angle.y / 1600, [1, 0, 0]);
+            // mat4.rotate(yRot, yRot, angle.y / 1600, [1, 0, 0]);
             //multiplies them together to create the new look
-            mat4.mul(modelMatrix, xRot, yRot);
-            mat4.mul(beanModelMatrix, xRot, yRot);
-
-
+            // mat4.mul(modelMatrix, xRot, yRot);
+            // mat4.mul(beanModelMatrix, xRot, yRot);
         } else {
             // let angleSeconds = performance.now() / 1000 / 6 * 2 * Math.PI;
             // angle.x = angleSeconds
@@ -210,8 +208,13 @@ async function main(){
         
         // mat4.lookAt(viewMatrix, [0, 0, zoom], [0, 0, 0], [0, 1, 0])
         // mat4.lookAt(viewMatrix, [0, 0, zoom], cameraLookAt, [0, 1, 0]);
-
-
+        
+        viewMatrix = getViewMatrix(
+            radius,
+            angle.x/4,
+            angle.y/16,
+            boardDim
+        )
         projectionMatrix = getProjectionMatrix(fov_Y, near, far, boardDim)
 
         renderScene(
@@ -221,7 +224,7 @@ async function main(){
           boardObj
         );
 
-        beanViewMatrix = getViewMatrix(1, angle.x, angle.y, beanDim),
+        beanViewMatrix = getViewMatrix(1, angle.x/4, angle.y/16, beanDim),
         beanProjectionMatrix = getProjectionMatrix(fov_Y, near, far, beanDim)
 
         renderBeans(
