@@ -237,15 +237,14 @@ class Models {
     }
 
     async getModelData(url) {
-        let obj = await loadObject(url)
+        let obj = await loadObject(url);
         let tmpSC = createSCs(obj);
         let tmpME = computeModelExtent(tmpSC);
-        let tmpVA = tmpSC.map(d => ({
+        let tmpVA = tmpSC.map((d) => ({
             position: { numComponents: 3, data: d.sc.positions },
             normal: { numComponents: 3, data: d.sc.normals },
-            uv: { numComponents: 2, data: d.sc.uvs }
+            uv: { numComponents: 2, data: d.sc.uvs },
         }));
-
 
         this.objs.push(obj);
         this.modelSCs.push(tmpSC);
@@ -253,8 +252,8 @@ class Models {
         this.vertexAttributes.push(tmpVA);
     }
 
-    getExtents(){
-        return this.modelExtents
+    getExtents() {
+        return this.modelExtents;
     }
 }
 
