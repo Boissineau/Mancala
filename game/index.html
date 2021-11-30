@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
-integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
-crossorigin="anonymous" defer>
+    integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
+    crossorigin="anonymous" defer>
 </script>
 
 
@@ -20,6 +20,30 @@ crossorigin="anonymous" defer>
     const mtlLoader = new MTLLoader();
 </script> -->
 
+<style>
+    .button {
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+
+    .button1 {
+        background-color: #4CAF50;
+    }
+
+    /* Green */
+    .button2 {
+        background-color: #008CBA;
+    }
+
+    /* Blue */
+</style>
 
 
 <head>
@@ -28,10 +52,39 @@ crossorigin="anonymous" defer>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
     <canvas id="glCanvas" width="640" height="480"></canvas>
-    <script type='module' src="test.js"></script>
-    <img id="crate-image" src="./assets/crate.png" width="0" height="0"></img>
-    <!-- <script src="game.js"></script> -->
+    <script type='module' src="app.js"></script>
+    <div>
+        <div class="slidecontainer">
+            <input type="range" min="-180" max="180" step="1" value="0" class="slider" id="myRange">
+            <input type="range" min="-180" max="180" step="1" value="0" class="slider" id="myRange2">
+            <button id="rotate" value=4 class="button button1">ROTATE BOARD</button>
+        </div>
+        <div>
+            <h3>TOP ROW</h3>
+            <button id="1" value=4 class="button button1">1</button>
+            <button id="2" value=4 class="button button1">2</button>
+            <button id="3" value=4 class="button button1">3</button>
+            <button id="4" value=4 class="button button1">4</button>
+            <button id="5" value=4 class="button button1">5</button>
+            <button id="6" value=4 class="button button1">6</button>
+        </div>
+        <div>
+            <h3>BOTTOM ROW</h3>
+            <button id="7" value=4 class="button button2">1</button>
+            <button id="8" value=4 class="button button2">2</button>
+            <button id="9" value=4 class="button button2">3</button>
+            <button id="10" value=4 class="button button2">4</button>
+            <button id="11" value=4 class="button button2">5</button>
+            <button id="12" value=4 class="button button2">6</button>
+        </div>
+        <div>
+
+        </div>
+    </div>
+
 </body>
+
 </html>
