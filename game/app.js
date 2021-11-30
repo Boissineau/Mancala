@@ -253,6 +253,9 @@ function renderScene(
     translations,
     boardExtents
 ) {
+    let slider1 = document.getElementById("myRange").value;
+    let slider2 = document.getElementById("myRange2").value;
+
     let materialColor = [1, 0, 0];
     let specularColor = [
         0.6901960784313725, 0.09019607843137255, 0.09019607843137255,
@@ -262,8 +265,6 @@ function renderScene(
     let ambient = 0;
     let light = [-1.1137182712554932, 8.420951843261719, 0, 1];
     let eyePosition = center;
-    // let x = Math.cos(deg2rad(angle.x)) * radius;
-    // let y = Math.sin(deg2rad(angle.y)) * radius;
 
     let angleSeconds = (performance.now() / 1000 / 6) * 2 * Math.PI;
 
