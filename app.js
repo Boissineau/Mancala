@@ -199,12 +199,6 @@ async function main() {
             document.getElementById(id).innerHTML = num;
         }
 
-        // mancala.board.map((d, i) => {});
-
-        document.getElementById("board").innerHTML = JSON.stringify(
-            mancala.board
-        );
-
         if (gameEnd) {
             playerTurn.innerHTML = mancala.winner;
         } else {
