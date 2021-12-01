@@ -16,7 +16,7 @@ let board = new Models();
 let bean = new Models();
 
 import { Models } from "./assets/models.js";
-
+import { Mancala } from "./mancala.js";
 let canvas = document.getElementById("glCanvas");
 let gl = canvas.getContext("webgl2");
 if (!gl) {
@@ -110,48 +110,50 @@ canvas.addEventListener("wheel", (event) => {
     zoom += scale;
 });
 
-let rotate = false;
-document.getElementById("1").addEventListener("click", () => {
-    clickedCell = 12;
-});
-document.getElementById("2").addEventListener("click", () => {
-    clickedCell = 11;
-});
-document.getElementById("3").addEventListener("click", () => {
-    clickedCell = 10;
-});
-document.getElementById("4").addEventListener("click", () => {
-    clickedCell = 9;
-});
-document.getElementById("5").addEventListener("click", () => {
-    clickedCell = 8;
-});
-document.getElementById("6").addEventListener("click", () => {
-    clickedCell = 7;
-});
-document.getElementById("7").addEventListener("click", () => {
+let board1 = document.getElementById("0").addEventListener("click", () => {
     clickedCell = 0;
 });
-document.getElementById("8").addEventListener("click", () => {
+let board2 = document.getElementById("1").addEventListener("click", () => {
     clickedCell = 1;
 });
-document.getElementById("9").addEventListener("click", () => {
+let board3 = document.getElementById("2").addEventListener("click", () => {
     clickedCell = 2;
 });
-document.getElementById("10").addEventListener("click", () => {
+let board4 = document.getElementById("3").addEventListener("click", () => {
     clickedCell = 3;
 });
-document.getElementById("11").addEventListener("click", () => {
+let board5 = document.getElementById("4").addEventListener("click", () => {
     clickedCell = 4;
 });
-document.getElementById("12").addEventListener("click", () => {
+let board6 = document.getElementById("5").addEventListener("click", () => {
     clickedCell = 5;
 });
+let board7 = document.getElementById("7").addEventListener("click", () => {
+    clickedCell = 7;
+});
+let board8 = document.getElementById("8").addEventListener("click", () => {
+    clickedCell = 8;
+});
+let board9 = document.getElementById("9").addEventListener("click", () => {
+    clickedCell = 9;
+});
+let board10 = document.getElementById("10").addEventListener("click", () => {
+    clickedCell = 10;
+});
+let board11 = document.getElementById("11").addEventListener("click", () => {
+    clickedCell = 11;
+});
+let board12 = document.getElementById("12").addEventListener("click", () => {
+    clickedCell = 12;
+});
+
+let rotate = false;
 document.getElementById("rotate").addEventListener("click", () => {
     rotate = !rotate;
     if (rotate) document.getElementById("rotate").innerHTML = "STOP ROTATING";
     if (!rotate) document.getElementById("rotate").innerHTML = "ROTATE BOARD";
 });
+
 let modelMatrix = m4.identity();
 let viewMatrix = m4.identity();
 let projectionMatrix = m4.identity();
@@ -186,10 +188,35 @@ async function main() {
 
     getViewMatrix();
     initBeans();
-
+    let mancala = new Mancala();
+    let playerTurn = document.getElementById("turn");
+    let gameEnd = false;
     let render = () => {
-        setCellValues();
-        if (clickedCell != null) console.log(clickedCell);
+        for (let i = 0; i < mancala.board.length; i++) {
+            if (i == 6 || i == 13) continue;
+            let id = `${i}`;
+            let num = `${mancala.board[i]}`;
+            document.getElementById(id).innerHTML = num;
+        }
+
+        // mancala.board.map((d, i) => {});
+
+        document.getElementById("board").innerHTML = JSON.stringify(
+            mancala.board
+        );
+
+        if (gameEnd) {
+            playerTurn.innerHTML = mancala.winner;
+        } else {
+            playerTurn.innerHTML = mancala.isHeroTurn
+                ? "Player 1's turn"
+                : "Player 2's turn";
+        }
+
+        if (!gameEnd) {
+            if (mancala.checkPit(clickedCell))
+                gameEnd = mancala.move(clickedCell);
+        }
 
         gl.clearColor(0.0, 0.0, 0.0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -225,24 +252,6 @@ async function main() {
         requestAnimationFrame(render);
     };
     requestAnimationFrame(render);
-}
-
-function setCellValues() {
-    document.getElementById("1").innerHTML = document.getElementById("1").value;
-    document.getElementById("2").innerHTML = document.getElementById("2").value;
-    document.getElementById("3").innerHTML = document.getElementById("3").value;
-    document.getElementById("4").innerHTML = document.getElementById("4").value;
-    document.getElementById("5").innerHTML = document.getElementById("5").value;
-    document.getElementById("6").innerHTML = document.getElementById("6").value;
-    document.getElementById("7").innerHTML = document.getElementById("7").value;
-    document.getElementById("8").innerHTML = document.getElementById("8").value;
-    document.getElementById("9").innerHTML = document.getElementById("9").value;
-    document.getElementById("10").innerHTML =
-        document.getElementById("10").value;
-    document.getElementById("11").innerHTML =
-        document.getElementById("11").value;
-    document.getElementById("12").innerHTML =
-        document.getElementById("12").value;
 }
 
 function renderScene(
