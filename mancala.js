@@ -19,6 +19,7 @@ class Mancala {
         (this.heroSide = 0), (this.vilSide = 0);
         this.isHeroTurn = true;
         this.gameInit();
+        this.winner = undefined;
     }
 
     gameInit() {
@@ -35,11 +36,21 @@ class Mancala {
 
     checkPit(choosenPit) {
         if (this.isHeroTurn) {
-            if (choosenPit >= heroStart && choosenPit <= heroEnd && this.board[choosenPit] !=0) return true;
+            if (
+                choosenPit >= heroStart &&
+                choosenPit <= heroEnd &&
+                this.board[choosenPit] != 0
+            )
+                return true;
             return false;
         }
         if (!this.isHeroTurn) {
-            if (choosenPit >= vilStart && choosenPit <= vilEnd && this.board[choosenPit] !=0) return true;
+            if (
+                choosenPit >= vilStart &&
+                choosenPit <= vilEnd &&
+                this.board[choosenPit] != 0
+            )
+                return true;
             return false;
         }
     }
@@ -62,7 +73,7 @@ class Mancala {
 
         let rocks = this.board[choosenPit];
         this.board[choosenPit] = 0;
-        let startPos = choosenPit+1;
+        let startPos = choosenPit + 1;
         let endPosition = 0;
 
         while (rocks != 0) {
@@ -89,33 +100,38 @@ class Mancala {
                     this.board[adjDict[i]] != 0
                 ) {
                     this.board[heroScore] += this.board[adjDict[i]];
-                    console.log('yoink')
+                    console.log("yoink");
                     this.board[adjDict[i]] = 0;
-                } else if(                    
+                } else if (
                     !this.isHeroTurn &&
                     rocks == 0 &&
                     endPosition != vilScore &&
                     this.board[i] == 1 &&
-                    this.board[adjDict[i]] != 0)
-                {
+                    this.board[adjDict[i]] != 0
+                ) {
                     this.board[vilScore] += this.board[adjDict[i]];
-                    console.log('yoink')
+                    console.log("yoink");
                     this.board[adjDict[i]] = 0;
                 }
-
             }
             startPos = 0; // reset index at end of board
         }
 
         // Special Rule: if ends in a score, have another turn
-        if ((this.isHeroTurn && endPosition != heroScore ) || (!this.isHeroTurn && endPosition != vilScore)){
+        if (
+            (this.isHeroTurn && endPosition != heroScore) ||
+            (!this.isHeroTurn && endPosition != vilScore)
+        ) {
             this.isHeroTurn = !this.isHeroTurn;
-
         }
 
         this.heroSide = countSide(this.board, heroStart, heroEnd);
         this.vilSide = countSide(this.board, vilStart, vilEnd);
         if (this.heroSide == 0 || this.vilSide == 0) {
+            this.winner =
+                this.board[heroScore] > this.board[vilScore]
+                    ? "Player 1"
+                    : "Player 2";
             return true;
         }
         return false;
