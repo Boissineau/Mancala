@@ -95,7 +95,7 @@ class Mancala {
                 if (
                     this.isHeroTurn &&
                     rocks == 0 &&
-                    endPosition != heroScore &&
+                    endPosition < heroScore &&
                     this.board[i] == 1 &&
                     this.board[adjDict[i]] != 0
                 ) {
@@ -105,7 +105,8 @@ class Mancala {
                 } else if (
                     !this.isHeroTurn &&
                     rocks == 0 &&
-                    endPosition != vilScore &&
+                    endPosition < vilScore &&
+                    endPosition > heroScore &&
                     this.board[i] == 1 &&
                     this.board[adjDict[i]] != 0
                 ) {
@@ -128,6 +129,17 @@ class Mancala {
         this.heroSide = countSide(this.board, heroStart, heroEnd);
         this.vilSide = countSide(this.board, vilStart, vilEnd);
         if (this.heroSide == 0 || this.vilSide == 0) {
+            for(var i = 0; i<heroScore;i++)
+            {
+                this.board[heroScore] += this.board[i];
+                this.board[i] = 0;
+            }
+            for(var i = heroScore+1; i <vilScore; i++)
+            {
+                this.board[vilScore] += this.board[i];
+                this.board[i] = 0;
+            }
+
             this.winner =
                 this.board[heroScore] > this.board[vilScore]
                     ? "Player 1"
@@ -137,5 +149,6 @@ class Mancala {
         return false;
     }
 }
+
 
 export { Mancala };
