@@ -54,17 +54,22 @@
 </head>
 
 <body>
-    <canvas id="glCanvas" width="640" height="480"></canvas>
     <script type='module' src="app.js"></script>
-    <div>
-        <div class="slidecontainer">
+    <div style="display: flex; align-content: space-between;">
+        <canvas id="glCanvas" width="640" height="480"></canvas>
+        <div style="display:grid">
             <h3 id="turn"></h3>
             <h3 id="score">Score: 0:0</h3>
-
-            <input type="range" min="-180" max="180" step="1" value="0" class="slider" id="myRange">
-            <input type="range" min="-180" max="180" step="1" value="0" class="slider" id="myRange2">
             <button id="rotate" value=4 class="button button1">ROTATE BOARD</button>
+            <button id="reset" value=4 class="button button1">RESET BOARD</button>
+            <div>
+                <input type="checkbox" id="AI_checkbox" name="AI_checkbox" value="false">
+                <label for="AI_checkbox"> Play against computer?</label><br>
+            </div>
         </div>
+
+    </div>
+    <div>
         <div>
             <h3>TOP ROW</h3>
             <button id="12" value=4 class="button button1">1</button>
