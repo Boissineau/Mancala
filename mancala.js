@@ -29,6 +29,7 @@ class Mancala {
         this.heroSide = countSide(this.board, heroStart, heroEnd);
         this.vilSide = countSide(this.board, vilStart, vilEnd);
         this.isHeroTurn = Math.random() < 0.5;
+        this.winner = undefined;
 
         if (this.isHeroTurn) console.log("Player 1's turn");
         else console.log("Player 2's turn");

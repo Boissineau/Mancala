@@ -36,15 +36,15 @@ let texture = twgl.createTexture(gl, {
 let cubemap1 = twgl.createTexture(gl, {
     target: gl.TEXTURE_CUBE_MAP,
     src: [
-        './assets/skybox/beach/1.png',
-        './assets/skybox/beach/2.png',
-        './assets/skybox/beach/3.png',
-        './assets/skybox/beach/4.png',
-        './assets/skybox/beach/5.png',
-        './assets/skybox/beach/6.png',
+        "./assets/skybox/beach/1.png",
+        "./assets/skybox/beach/2.png",
+        "./assets/skybox/beach/3.png",
+        "./assets/skybox/beach/4.png",
+        "./assets/skybox/beach/5.png",
+        "./assets/skybox/beach/6.png",
     ],
-    flipY: false
-})
+    flipY: false,
+});
 
 // let cubemap2 = twgl.createTexture(gl, {
 //     target: gl.TEXTURE_CUBE_MAP,
@@ -97,58 +97,58 @@ let cubemap1 = twgl.createTexture(gl, {
 //     flipY: false
 // })
 
-let cubemapSrc={
-    "beach":[
-        './assets/skybox/beach/1.png',
-        './assets/skybox/beach/2.png',
-        './assets/skybox/beach/3.png',
-        './assets/skybox/beach/4.png',
-        './assets/skybox/beach/5.png',
-        './assets/skybox/beach/6.png',
+let cubemapSrc = {
+    beach: [
+        "./assets/skybox/beach/1.png",
+        "./assets/skybox/beach/2.png",
+        "./assets/skybox/beach/3.png",
+        "./assets/skybox/beach/4.png",
+        "./assets/skybox/beach/5.png",
+        "./assets/skybox/beach/6.png",
     ],
-    "city":[
-        './assets/skybox/city/1.png',
-        './assets/skybox/city/2.png',
-        './assets/skybox/city/3.png',
-        './assets/skybox/city/4.png',
-        './assets/skybox/city/5.png',
-        './assets/skybox/city/6.png',
+    city: [
+        "./assets/skybox/city/1.png",
+        "./assets/skybox/city/2.png",
+        "./assets/skybox/city/3.png",
+        "./assets/skybox/city/4.png",
+        "./assets/skybox/city/5.png",
+        "./assets/skybox/city/6.png",
     ],
-    "field":[
-        './assets/skybox/field/1.png',
-        './assets/skybox/field/2.png',
-        './assets/skybox/field/3.png',
-        './assets/skybox/field/4.png',
-        './assets/skybox/field/5.png',
-        './assets/skybox/field/6.png',
+    field: [
+        "./assets/skybox/field/1.png",
+        "./assets/skybox/field/2.png",
+        "./assets/skybox/field/3.png",
+        "./assets/skybox/field/4.png",
+        "./assets/skybox/field/5.png",
+        "./assets/skybox/field/6.png",
     ],
-    "forest":[
-        './assets/skybox/forest/1.png',
-        './assets/skybox/forest/2.png',
-        './assets/skybox/forest/3.png',
-        './assets/skybox/forest/4.png',
-        './assets/skybox/forest/5.png',
-        './assets/skybox/forest/6.png',
+    forest: [
+        "./assets/skybox/forest/1.png",
+        "./assets/skybox/forest/2.png",
+        "./assets/skybox/forest/3.png",
+        "./assets/skybox/forest/4.png",
+        "./assets/skybox/forest/5.png",
+        "./assets/skybox/forest/6.png",
     ],
-    "lounge": [
-        './assets/skybox/lounge/1.png',
-        './assets/skybox/lounge/2.png',
-        './assets/skybox/lounge/3.png',
-        './assets/skybox/lounge/4.png',
-        './assets/skybox/lounge/5.png',
-        './assets/skybox/lounge/6.png',
-    ]
-}
+    lounge: [
+        "./assets/skybox/lounge/1.png",
+        "./assets/skybox/lounge/2.png",
+        "./assets/skybox/lounge/3.png",
+        "./assets/skybox/lounge/4.png",
+        "./assets/skybox/lounge/5.png",
+        "./assets/skybox/lounge/6.png",
+    ],
+};
 
-document.getElementById("skybox-select").addEventListener("change",()=>{
-    let cubemap = document.getElementById("skybox-select").value
-    
+document.getElementById("skybox-select").addEventListener("change", () => {
+    let cubemap = document.getElementById("skybox-select").value;
+
     twgl.createTexture(gl, {
         target: gl.TEXTURE_CUBE_MAP,
         flipY: false,
-        src: cubemapSrc[cubemap]
-    })
-})
+        src: cubemapSrc[cubemap],
+    });
+});
 
 let skyboxProgram = skyboxProgramInfo(gl);
 let sceneProgram = sceneProgramInfo(gl);
@@ -268,8 +268,10 @@ let clickedCell = undefined;
 let prevBoard = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
 let beanPos = [];
 let mancala = new Mancala();
+let gameEnd = false;
 document.getElementById("reset").addEventListener("click", () => {
     mancala.gameInit();
+    gameEnd = false;
     beanPos = [];
     mancala.board.forEach((numberOfBeans, index) => {
         for (let i = 0; i < numberOfBeans; i++) {
@@ -299,7 +301,6 @@ async function main() {
 
     let playerTurn = document.getElementById("turn");
     let score = document.getElementById("score");
-    let gameEnd = false;
 
     mancala.board.forEach((numberOfBeans, index) => {
         for (let i = 0; i < numberOfBeans; i++) {
@@ -506,7 +507,7 @@ function bufferInfoArray(model) {
 }
 
 function getViewMatrix() {
-    let cameraLookAt = [0, 0,0];
+    let cameraLookAt = [0, 0, 0];
     if (rotate) {
         angle.x += 0.4;
         angle.y += 0.4;
