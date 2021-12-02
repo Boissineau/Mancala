@@ -185,13 +185,20 @@ async function main() {
     gl.depthMask(true);
 
     // gl.clearColor(0.3, 0.4, 0.5, 1);
+    // let randomTranslation = getTranslations();
+    // let newBeanPos = v3.add(beans[index], randomTranslation);
 
     getViewMatrix();
-    initBeans();
+    beans = getPositions();
     let mancala = new Mancala();
     let playerTurn = document.getElementById("turn");
+    let score = document.getElementById("score");
     let gameEnd = false;
     let render = () => {
+        let p1Score = mancala.board[6];
+        let p2Score = mancala.board[13];
+        score.innerHTML = `Score: ${p1Score}:${p2Score}`;
+        // displays number of beans in each button
         for (let i = 0; i < mancala.board.length; i++) {
             if (i == 6 || i == 13) continue;
             let id = `${i}`;
@@ -199,6 +206,7 @@ async function main() {
             document.getElementById(id).innerHTML = num;
         }
 
+        // ends or changes turn text
         if (gameEnd) {
             playerTurn.innerHTML = mancala.winner;
         } else {
@@ -230,16 +238,18 @@ async function main() {
             boardExtents
         );
 
-        for (let i = 0; i < 48; i++) {
-            renderScene(
-                sceneProgram,
-                beanAttributes,
-                texture,
-                true,
-                beans[i],
-                boardExtents
-            );
-        }
+        mancala.board.forEach((numberOfBeans, index) => {
+            for (let i = 0; i < numberOfBeans; i++) {
+                renderScene(
+                    sceneProgram,
+                    beanAttributes,
+                    texture,
+                    true,
+                    beans[index],
+                    boardExtents
+                );
+            }
+        });
 
         renderSkybox(skyboxProgram.program);
         clickedCell = undefined;
@@ -402,35 +412,33 @@ function getAngle(x, y) {
     angle.y += distY;
 }
 
-function initBeans() {
-    let numBeans = 48;
-    let positions = getBeanPositions();
+function getPositions() {
+    return {
+        0: [-2.4, -0.5, 0],
+        1: [-1.4, -0.5, 0],
+        2: [-0.4, -0.5, 0],
+        3: [0.4, -0.5, 0],
+        4: [1.4, -0.5, 0],
+        5: [2.4, -0.5, 0],
+        6: [3.3, 0, 0],
+        7: [2.4, 0.3, 0],
+        8: [1.4, 0.3, 0],
+        9: [0.4, 0.3, 0],
+        10: [-0.4, 0.3, 0],
+        11: [-1.4, 0.3, 0],
+        12: [-2.4, 0.3, 0],
+        13: [-3.3, 0, 0],
+    };
+}
 
-    function getBeanPositions() {
-        return [
-            [-2.4, -0.5, 0],
-            [-1.4, -0.5, 0],
-            [-0.4, -0.5, 0],
-            [0.4, -0.5, 0],
-            [1.4, -0.5, 0],
-            [2.4, -0.5, 0],
-            [3.3, 0, 0],
-            [2.4, 0.3, 0],
-            [1.4, 0.3, 0],
-            [0.4, 0.3, 0],
-            [-0.4, 0.3, 0],
-            [-1.4, 0.3, 0],
-            [-2.4, 0.3, 0],
-            [-3.3, 0, 0],
-        ];
-    }
-
-    for (let i = 0; i < numBeans / 4 + 1; i++) {
-        for (let j = 0; j < 4; j++) {
-            if (i == 6) break;
-            beans.push(positions[i]);
-        }
-    }
+function getTranslations() {
+    let deltaX = 0.1;
+    let deltaY = 0.1;
+    let deltaZ = 0.3;
+    return [rand(-0.2, 0.2), rand(-0.2, 0.2), rand(0, 0.3)];
+}
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
 }
 
 function deg2rad(deg) {
