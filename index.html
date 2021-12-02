@@ -55,24 +55,27 @@
 
 <body>
     <script type='module' src="app.js"></script>
-    <div style="display: flex; align-content: space-between;">
-        <canvas id="glCanvas" width="1280" height="960"></canvas>
-        <div style="display:grid">
-            <h3 id="turn"></h3>
-            <h3 id="score">Score: 0:0</h3>
-            <button id="rotate" value=4 class="button button1">ROTATE BOARD</button>
-            <select name="skybox" id="skybox-select">
-                <option value="beach">Beach</option>
-                <option value="city">City</option>
-                <option value="field">Field</option>
-                <option value="forest">Forest</option>
-                <option value="lounge">Lounge</option>
-            </select>
-            <button id="reset" value=4 class="button button1">RESET BOARD</button>
-            <div>
-                <input type="checkbox" id="AI_checkbox" name="AI_checkbox" value="false">
-                <label for="AI_checkbox"> Play against computer?</label><br>
-            </div>
+    <div style="display: flex;">
+        <div>
+            <canvas id="glCanvas" width="960" height="720"></canvas>
+        </div>
+        <div style="">
+            <h1 id="turn">
+                </h3>
+                <h1 id="score">Score: 0:0</h3>
+                    <button id="rotate" value=4 class="button button1" style="">ROTATE BOARD</button>
+                    <button id="reset" value=4 class="button button1">RESET BOARD</button>
+                    <div>
+                        <input type="checkbox" id="AI_checkbox" name="AI_checkbox" value="false">
+                        <label for="AI_checkbox"> Play against computer?</label><br>
+                        <select name="skybox" id="skybox-select">
+                            <option value="beach">Beach</option>
+                            <option value="city">City</option>
+                            <option value="field">Field</option>
+                            <option value="forest">Forest</option>
+                            <option value="lounge">Lounge</option>
+                        </select>
+                    </div>
         </div>
 
     </div>
