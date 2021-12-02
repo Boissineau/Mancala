@@ -29,11 +29,13 @@ if (!gl) {
 let texture = twgl.createTexture(gl, {
     // see more info on options from: https://twgljs.org/docs/module-twgl.html#.TextureOptions
     // Also see https://twgljs.org/docs/
-    src: "./assets/board/boardTexture.jpeg", //or imageURL,
+    // src: "./assets/board/wood.jpg", //or imageURL,
+    src: "./assets/board/darkwood.jpg", //or imageURL,
+
     // flipY: true,
 });
 
-let cubemap1 = twgl.createTexture(gl, {
+let cubemap = twgl.createTexture(gl, {
     target: gl.TEXTURE_CUBE_MAP,
     src: [
         "./assets/skybox/beach/1.png",
@@ -46,56 +48,10 @@ let cubemap1 = twgl.createTexture(gl, {
     flipY: false,
 });
 
-// let cubemap2 = twgl.createTexture(gl, {
-//     target: gl.TEXTURE_CUBE_MAP,
-//     src: [
-//         './assets/skybox/city/1.png',
-//         './assets/skybox/city/2.png',
-//         './assets/skybox/city/3.png',
-//         './assets/skybox/city/4.png',
-//         './assets/skybox/city/5.png',
-//         './assets/skybox/city/6.png',
-//     ],
-//     flipY: false
-// })
-
-// let cubemap3 = twgl.createTexture(gl, {
-//     target: gl.TEXTURE_CUBE_MAP,
-//     src: [
-//         './assets/skybox/field/1.png',
-//         './assets/skybox/field/2.png',
-//         './assets/skybox/field/3.png',
-//         './assets/skybox/field/4.png',
-//         './assets/skybox/field/5.png',
-//         './assets/skybox/field/6.png',
-//     ],
-//     flipY: false
-// })
-// let cubemap4 = twgl.createTexture(gl, {
-//     target: gl.TEXTURE_CUBE_MAP,
-//     src: [
-//         './assets/skybox/forest/1.png',
-//         './assets/skybox/forest/2.png',
-//         './assets/skybox/forest/3.png',
-//         './assets/skybox/forest/4.png',
-//         './assets/skybox/forest/5.png',
-//         './assets/skybox/forest/6.png',
-//     ],
-//     flipY: false
-// })
-
-// let cubemap5 = twgl.createTexture(gl, {
-//     target: gl.TEXTURE_CUBE_MAP,
-//     src: [
-//         './assets/skybox/lounge/1.png',
-//         './assets/skybox/lounge/2.png',
-//         './assets/skybox/lounge/3.png',
-//         './assets/skybox/lounge/4.png',
-//         './assets/skybox/lounge/5.png',
-//         './assets/skybox/lounge/6.png',
-//     ],
-//     flipY: false
-// })
+let boardSrc = {    
+    darkwood: "./assets/board/darkwood.jpg",
+    lightwood: "./assets/board/lightwood.jpg"
+}
 
 let cubemapSrc = {
     beach: [
@@ -147,6 +103,15 @@ document.getElementById("skybox-select").addEventListener("change", () => {
         target: gl.TEXTURE_CUBE_MAP,
         flipY: false,
         src: cubemapSrc[cubemap],
+    });
+});
+
+document.getElementById("boardtex-select").addEventListener("change", () => {
+    let boardTex = document.getElementById("boardtex-select").value;
+
+    texture = twgl.createTexture(gl, {
+        flipY: false,
+        src: boardSrc[boardTex],
     });
 });
 
@@ -411,14 +376,16 @@ function renderScene(
     translations,
     boardExtents
 ) {
-    let materialColor = [1, 0, 0];
+    let materialColor = [1, 1, 1];
     let specularColor = [
-        0.6901960784313725, 0.09019607843137255, 0.09019607843137255,
+        0.0, 0.0, 0.0,
     ];
     let K_s = 0;
     let shininess = 100;
     let ambient = 0;
-    let light = [-1.1137182712554932, 8.420951843261719, 0, 1];
+    // let light = [-1.1137182712554932, 8.420951843261719, 0, 1];
+    let light = [1.1137182712554932, 8.420951843261719, .8, 1];
+
     let eyePosition = center;
 
     let angleSeconds = (performance.now() / 1000 / 6) * 2 * Math.PI;
