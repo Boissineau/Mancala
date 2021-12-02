@@ -183,17 +183,26 @@ async function main() {
     gl.viewport(0, 0, canvasWidth, canvasHeight);
     gl.colorMask(true, true, true, true);
     gl.depthMask(true);
-
-    // gl.clearColor(0.3, 0.4, 0.5, 1);
-    // let randomTranslation = getTranslations();
-    // let newBeanPos = v3.add(beans[index], randomTranslation);
-
     getViewMatrix();
     beans = getPositions();
+
+    /*
+    Array that has every individual bean location with translation
+
+    */
+
     let mancala = new Mancala();
     let playerTurn = document.getElementById("turn");
     let score = document.getElementById("score");
     let gameEnd = false;
+
+    let beanPos = [];
+    mancala.board.forEach((numberOfBeans, index) => {
+        for (let i = 0; i < numberOfBeans; i++) {
+            beanPos.push(getTranslations(beans[index]));
+        }
+    });
+
     let render = () => {
         let p1Score = mancala.board[6];
         let p2Score = mancala.board[13];
@@ -208,7 +217,7 @@ async function main() {
 
         // ends or changes turn text
         if (gameEnd) {
-            playerTurn.innerHTML = mancala.winner;
+            playerTurn.innerHTML = mancala.winner + " won!";
         } else {
             playerTurn.innerHTML = mancala.isHeroTurn
                 ? "Player 1's turn"
@@ -216,8 +225,15 @@ async function main() {
         }
 
         if (!gameEnd) {
-            if (mancala.checkPit(clickedCell))
+            if (mancala.checkPit(clickedCell)) {
                 gameEnd = mancala.move(clickedCell);
+                beanPos = [];
+                mancala.board.forEach((numberOfBeans, index) => {
+                    for (let i = 0; i < numberOfBeans; i++) {
+                        beanPos.push(getTranslations(beans[index], index));
+                    }
+                });
+            }
         }
 
         gl.clearColor(0.0, 0.0, 0.0, 1);
@@ -238,18 +254,18 @@ async function main() {
             boardExtents
         );
 
-        mancala.board.forEach((numberOfBeans, index) => {
-            for (let i = 0; i < numberOfBeans; i++) {
-                renderScene(
-                    sceneProgram,
-                    beanAttributes,
-                    texture,
-                    true,
-                    beans[index],
-                    boardExtents
-                );
-            }
-        });
+        // mancala.board.forEach((numberOfBeans, index) => {
+        for (let i = 0; i < 48; i++) {
+            renderScene(
+                sceneProgram,
+                beanAttributes,
+                texture,
+                true,
+                beanPos[i],
+                boardExtents
+            );
+        }
+        // });
 
         renderSkybox(skyboxProgram.program);
         clickedCell = undefined;
@@ -431,11 +447,13 @@ function getPositions() {
     };
 }
 
-function getTranslations() {
-    let deltaX = 0.1;
-    let deltaY = 0.1;
-    let deltaZ = 0.3;
-    return [rand(-0.2, 0.2), rand(-0.2, 0.2), rand(0, 0.3)];
+function getTranslations(position, index) {
+    let deltaX = 0.2;
+    let deltaY = 0.2;
+    let deltaZ = 0.1;
+    if (index == 6 || index == 13) deltaY = 0.5;
+    let trans = [rand(-deltaX, deltaX), rand(-deltaY, deltaY), rand(0, deltaZ)];
+    return v3.add(position, trans);
 }
 function rand(min, max) {
     return Math.random() * (max - min) + min;
