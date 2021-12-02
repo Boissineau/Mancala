@@ -129,13 +129,11 @@ class Mancala {
         this.heroSide = countSide(this.board, heroStart, heroEnd);
         this.vilSide = countSide(this.board, vilStart, vilEnd);
         if (this.heroSide == 0 || this.vilSide == 0) {
-            for(var i = 0; i<heroScore;i++)
-            {
+            for (var i = 0; i < heroScore; i++) {
                 this.board[heroScore] += this.board[i];
                 this.board[i] = 0;
             }
-            for(var i = heroScore+1; i <vilScore; i++)
-            {
+            for (var i = heroScore + 1; i < vilScore; i++) {
                 this.board[vilScore] += this.board[i];
                 this.board[i] = 0;
             }
@@ -149,6 +147,5 @@ class Mancala {
         return false;
     }
 }
-
 
 export { Mancala };
