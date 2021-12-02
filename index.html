@@ -54,7 +54,7 @@
 </head>
 
 <body>
-    <canvas id="glCanvas" width="640" height="480"></canvas>
+    <canvas id="glCanvas" width="1280" height="960"></canvas>
     <script type='module' src="app.js"></script>
     <div>
         <div class="slidecontainer">
@@ -64,6 +64,13 @@
             <input type="range" min="-180" max="180" step="1" value="0" class="slider" id="myRange">
             <input type="range" min="-180" max="180" step="1" value="0" class="slider" id="myRange2">
             <button id="rotate" value=4 class="button button1">ROTATE BOARD</button>
+            <select name="skybox" id="skybox-select">
+                <option value="beach">Beach</option>
+                <option value="city">City</option>
+                <option value="field">Field</option>
+                <option value="forest">Forest</option>
+                <option value="lounge">Lounge</option>
+            </select>
         </div>
         <div>
             <h3>TOP ROW</h3>

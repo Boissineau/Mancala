@@ -33,31 +33,122 @@ let texture = twgl.createTexture(gl, {
     // flipY: true,
 });
 
-let cubemap = twgl.createTexture(gl, {
+let cubemap1 = twgl.createTexture(gl, {
     target: gl.TEXTURE_CUBE_MAP,
     src: [
-        "./assets/skybox/pos-x.jpg",
-        "./assets/skybox/neg-x.jpg",
-        "./assets/skybox/pos-y.jpg",
-        "./assets/skybox/neg-y.jpg",
-        "./assets/skybox/pos-z.jpg",
-        "./assets/skybox/neg-z.jpg",
+        './assets/skybox/beach/1.png',
+        './assets/skybox/beach/2.png',
+        './assets/skybox/beach/3.png',
+        './assets/skybox/beach/4.png',
+        './assets/skybox/beach/5.png',
+        './assets/skybox/beach/6.png',
     ],
-    // flipY: true
-});
+    flipY: false
+})
 
-// let cubemap = twgl.createTexture(gl, {
+// let cubemap2 = twgl.createTexture(gl, {
 //     target: gl.TEXTURE_CUBE_MAP,
 //     src: [
-//         './assets/skybox/space/1.png',
-//         './assets/skybox/space/2.png',
-//         './assets/skybox/space/3.png',
-//         './assets/skybox/space/4.png',
-//         './assets/skybox/space/5.png',
-//         './assets/skybox/space/6.png',
+//         './assets/skybox/city/1.png',
+//         './assets/skybox/city/2.png',
+//         './assets/skybox/city/3.png',
+//         './assets/skybox/city/4.png',
+//         './assets/skybox/city/5.png',
+//         './assets/skybox/city/6.png',
 //     ],
-//      flipY: true
+//     flipY: false
 // })
+
+// let cubemap3 = twgl.createTexture(gl, {
+//     target: gl.TEXTURE_CUBE_MAP,
+//     src: [
+//         './assets/skybox/field/1.png',
+//         './assets/skybox/field/2.png',
+//         './assets/skybox/field/3.png',
+//         './assets/skybox/field/4.png',
+//         './assets/skybox/field/5.png',
+//         './assets/skybox/field/6.png',
+//     ],
+//     flipY: false
+// })
+// let cubemap4 = twgl.createTexture(gl, {
+//     target: gl.TEXTURE_CUBE_MAP,
+//     src: [
+//         './assets/skybox/forest/1.png',
+//         './assets/skybox/forest/2.png',
+//         './assets/skybox/forest/3.png',
+//         './assets/skybox/forest/4.png',
+//         './assets/skybox/forest/5.png',
+//         './assets/skybox/forest/6.png',
+//     ],
+//     flipY: false
+// })
+
+// let cubemap5 = twgl.createTexture(gl, {
+//     target: gl.TEXTURE_CUBE_MAP,
+//     src: [
+//         './assets/skybox/lounge/1.png',
+//         './assets/skybox/lounge/2.png',
+//         './assets/skybox/lounge/3.png',
+//         './assets/skybox/lounge/4.png',
+//         './assets/skybox/lounge/5.png',
+//         './assets/skybox/lounge/6.png',
+//     ],
+//     flipY: false
+// })
+
+let cubemapSrc={
+    "beach":[
+        './assets/skybox/beach/1.png',
+        './assets/skybox/beach/2.png',
+        './assets/skybox/beach/3.png',
+        './assets/skybox/beach/4.png',
+        './assets/skybox/beach/5.png',
+        './assets/skybox/beach/6.png',
+    ],
+    "city":[
+        './assets/skybox/city/1.png',
+        './assets/skybox/city/2.png',
+        './assets/skybox/city/3.png',
+        './assets/skybox/city/4.png',
+        './assets/skybox/city/5.png',
+        './assets/skybox/city/6.png',
+    ],
+    "field":[
+        './assets/skybox/field/1.png',
+        './assets/skybox/field/2.png',
+        './assets/skybox/field/3.png',
+        './assets/skybox/field/4.png',
+        './assets/skybox/field/5.png',
+        './assets/skybox/field/6.png',
+    ],
+    "forest":[
+        './assets/skybox/forest/1.png',
+        './assets/skybox/forest/2.png',
+        './assets/skybox/forest/3.png',
+        './assets/skybox/forest/4.png',
+        './assets/skybox/forest/5.png',
+        './assets/skybox/forest/6.png',
+    ],
+    "lounge": [
+        './assets/skybox/lounge/1.png',
+        './assets/skybox/lounge/2.png',
+        './assets/skybox/lounge/3.png',
+        './assets/skybox/lounge/4.png',
+        './assets/skybox/lounge/5.png',
+        './assets/skybox/lounge/6.png',
+    ]
+}
+
+document.getElementById("skybox-select").addEventListener("change",()=>{
+    let cubemap = document.getElementById("skybox-select").value
+    
+    twgl.createTexture(gl, {
+        target: gl.TEXTURE_CUBE_MAP,
+        flipY: false,
+        src: cubemapSrc[cubemap]
+    })
+})
 
 let skyboxProgram = skyboxProgramInfo(gl);
 let sceneProgram = sceneProgramInfo(gl);
@@ -381,7 +472,7 @@ function bufferInfoArray(model) {
 }
 
 function getViewMatrix() {
-    let cameraLookAt = [0, 0, 0];
+    let cameraLookAt = [0, 0,0];
     if (rotate) {
         angle.x += 0.4;
         angle.y += 0.4;
