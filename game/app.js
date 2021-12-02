@@ -154,6 +154,14 @@ document.getElementById("rotate").addEventListener("click", () => {
     if (!rotate) document.getElementById("rotate").innerHTML = "ROTATE BOARD";
 });
 
+document.getElementById("AI_checkbox").addEventListener("click", () => {
+    let val =
+        document.getElementById("AI_checkbox").value == "true"
+            ? "false"
+            : "true";
+    document.getElementById("AI_checkbox").value = val;
+});
+
 let modelMatrix = m4.identity();
 let viewMatrix = m4.identity();
 let projectionMatrix = m4.identity();
@@ -167,6 +175,17 @@ let beans = [];
 let cells = [];
 let clickedCell = undefined;
 let prevBoard = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
+let beanPos = [];
+let mancala = new Mancala();
+document.getElementById("reset").addEventListener("click", () => {
+    mancala.gameInit();
+    beanPos = [];
+    mancala.board.forEach((numberOfBeans, index) => {
+        for (let i = 0; i < numberOfBeans; i++) {
+            beanPos.push(getTranslations(beans[index]));
+        }
+    });
+});
 
 async function main() {
     await board.getModelData(boardURL);
@@ -187,17 +206,10 @@ async function main() {
     getViewMatrix();
     beans = getPositions();
 
-    /*
-    Array that has every individual bean location with translation
-
-    */
-
-    let mancala = new Mancala();
     let playerTurn = document.getElementById("turn");
     let score = document.getElementById("score");
     let gameEnd = false;
 
-    let beanPos = [];
     mancala.board.forEach((numberOfBeans, index) => {
         for (let i = 0; i < numberOfBeans; i++) {
             beanPos.push(getTranslations(beans[index]));
@@ -226,6 +238,20 @@ async function main() {
         }
 
         if (!gameEnd) {
+            if (
+                document.getElementById("AI_checkbox").value == "true" &&
+                !mancala.isHeroTurn
+            ) {
+                let availablePits = () => {
+                    for (let i = 7; i < 13; i++) {
+                        if (mancala.checkPit(i)) return i;
+                    }
+                    return 0;
+                };
+
+                clickedCell = availablePits();
+            }
+
             if (mancala.checkPit(clickedCell)) {
                 gameEnd = mancala.move(clickedCell);
                 let prevPos = beanPos;
@@ -293,9 +319,6 @@ function renderScene(
     translations,
     boardExtents
 ) {
-    let slider1 = document.getElementById("myRange").value;
-    let slider2 = document.getElementById("myRange2").value;
-
     let materialColor = [1, 0, 0];
     let specularColor = [
         0.6901960784313725, 0.09019607843137255, 0.09019607843137255,
