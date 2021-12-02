@@ -49,15 +49,15 @@ let cubemap = twgl.createTexture(gl, {
 // let cubemap = twgl.createTexture(gl, {
 //     target: gl.TEXTURE_CUBE_MAP,
 //     src: [
-//         './assets/skybox/space/1.png',
-//         './assets/skybox/space/2.png',
-//         './assets/skybox/space/3.png',
-//         './assets/skybox/space/4.png',
-//         './assets/skybox/space/5.png',
-//         './assets/skybox/space/6.png',
+//         "./assets/skybox/space/1.png",
+//         "./assets/skybox/space/2.png",
+//         "./assets/skybox/space/3.png",
+//         "./assets/skybox/space/4.png",
+//         "./assets/skybox/space/5.png",
+//         "./assets/skybox/space/6.png",
 //     ],
-//      flipY: true
-// })
+//     flipY: true,
+// });
 
 let skyboxProgram = skyboxProgramInfo(gl);
 let sceneProgram = sceneProgramInfo(gl);
@@ -166,6 +166,7 @@ let angle = { x: 0, y: 0 };
 let beans = [];
 let cells = [];
 let clickedCell = undefined;
+let prevBoard = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
 
 async function main() {
     await board.getModelData(boardURL);
@@ -227,13 +228,23 @@ async function main() {
         if (!gameEnd) {
             if (mancala.checkPit(clickedCell)) {
                 gameEnd = mancala.move(clickedCell);
+                let prevPos = beanPos;
                 beanPos = [];
                 mancala.board.forEach((numberOfBeans, index) => {
-                    for (let i = 0; i < numberOfBeans; i++) {
-                        beanPos.push(getTranslations(beans[index], index));
+                    if (prevBoard[index] == numberOfBeans) {
+                        console.log("Same number of beans");
+                        for (let i = 0; i < numberOfBeans; i++) {
+                            beanPos.push(prevPos.shift());
+                        }
+                    } else {
+                        for (let i = 0; i < numberOfBeans; i++) {
+                            beanPos.push(getTranslations(beans[index], index));
+                            prevPos.shift();
+                        }
                     }
                 });
             }
+            prevBoard = mancala.board.slice();
         }
 
         gl.clearColor(0.0, 0.0, 0.0, 1);
