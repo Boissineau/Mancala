@@ -1,5 +1,4 @@
-import { OBJLoader } from "../libraries/three.js/examples/jsm/loaders/OBJLoader.js";
-
+import { OBJLoader } from "https://cdn.skypack.dev/three/examples/jsm/loaders/OBJLoader.js";
 const vec3 = twgl.v3;
 const mat4 = twgl.m4;
 mat4.create = () =>
