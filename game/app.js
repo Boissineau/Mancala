@@ -17,6 +17,7 @@ let bean = new Models();
 
 import { Models } from "./assets/models.js";
 import { Mancala } from "./mancala.js";
+
 let canvas = document.getElementById("glCanvas");
 let gl = canvas.getContext("webgl2");
 if (!gl) {
@@ -48,10 +49,10 @@ let cubemap = twgl.createTexture(gl, {
     flipY: false,
 });
 
-let boardSrc = {    
+let boardSrc = {
     darkwood: "./assets/board/darkwood.jpg",
-    lightwood: "./assets/board/lightwood.jpg"
-}
+    lightwood: "./assets/board/lightwood.jpg",
+};
 
 let cubemapSrc = {
     beach: [
@@ -377,14 +378,12 @@ function renderScene(
     boardExtents
 ) {
     let materialColor = [1, 1, 1];
-    let specularColor = [
-        0.0, 0.0, 0.0,
-    ];
+    let specularColor = [0.0, 0.0, 0.0];
     let K_s = 0;
     let shininess = 100;
     let ambient = 0;
     // let light = [-1.1137182712554932, 8.420951843261719, 0, 1];
-    let light = [1.1137182712554932, 8.420951843261719, .8, 1];
+    let light = [1.1137182712554932, 8.420951843261719, 0.8, 1];
 
     let eyePosition = center;
 
